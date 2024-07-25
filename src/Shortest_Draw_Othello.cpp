@@ -235,9 +235,7 @@ void generate_boards(Board *board, uint64_t discs, uint64_t any_color_discs, int
     if (discs == 0){
         if (board->is_end()){ // game over
             ++(*n_boards);
-            //std::cerr << board->n_discs() << " " << board->score_player() << std::endl;
-            //board->print();
-            //find_path(board, n_solutions);
+            find_path(board, n_solutions);
         }
         return;
     }
@@ -250,13 +248,13 @@ void generate_boards(Board *board, uint64_t discs, uint64_t any_color_discs, int
             generate_boards(board, 0, any_color_discs, n_discs_half, n_boards, n_solutions);
         board->player ^= discs;
     } else{
-        bool any_color = (any_color_discs & discs) != 0;
         uint_fast8_t cell;
         uint64_t cell_bit;
-        if (any_color){
-            cell = ctz(any_color_discs & discs);
+        if (any_color_discs){
+            cell = ctz(any_color_discs);
             cell_bit = 1ULL << cell;
             discs ^= cell_bit;
+            any_color_discs ^= cell_bit;
             board->player ^= cell_bit;
                 generate_boards(board, discs, any_color_discs, n_discs_half, n_boards, n_solutions);
             board->player ^= cell_bit;
@@ -387,7 +385,7 @@ int main(int argc, char* argv[]){
         if (depth + 4 - pop_count_ull(discs) >= 0){
             generate_silhouettes(discs, depth + 4 - pop_count_ull(discs), put_cells, &n_silhouettes, &n_boards, &n_solutions);
         }
-        std::cerr << "depth " << depth << " n_silhouettes " << n_silhouettes << " n_boards " << n_boards << " n_solutions " << n_solutions << " time " << tim() - strt << " ms" << std::endl;
+        std::cout << "depth " << depth << " n_silhouettes " << n_silhouettes << " n_boards " << n_boards << " n_solutions " << n_solutions << " time " << tim() - strt << " ms" << std::endl;
     }
     return 0;
 }
