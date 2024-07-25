@@ -28,34 +28,34 @@ void output_transcript(std::vector<int> &transcript){
 
 // generate draw endgame
 // nCr(24, 12) = 2.7e6 <= small enough to generate all boards and check game over
-void generate_check_boards(uint64_t discs, uint64_t *n_solutions){
-    Board board;
-    std::vector<uint_fast8_t> cells;
-    uint64_t discs_copy = discs;
-    for (uint_fast8_t cell = first_bit(&discs_copy); discs_copy; cell = next_bit(&discs_copy)){
-        cells.emplace_back(cell);
-    }
-    int n_discs = pop_count_ull(discs);
-    uint64_t max_bits = 1 << n_discs;
-    for (uint64_t bits = 0; bits < max_bits; ++bits){
-        if (pop_count_ull(bits) == n_discs / 2){ // draw
-            board.player = 0;
-            board.opponent = 0;
-            for (int i = 0; i < n_discs; ++i){
-                if (1 & (bits >> i)){
-                    board.player |= 1ULL << cells[i];
-                } else{
-                    board.opponent |= 1ULL << cells[i];
-                }
-            }
-            if (board.is_end()){ // game over
-                board.print();
-                ++(*n_solutions);
-            }
+void generate_check_boards(Board *board, uint64_t discs, int n_discs_half, uint64_t *n_solutions){
+    if (discs == 0){
+        if (board->is_end()){ // game over
+            std::cerr << board->n_discs() << " " << board->score_player() << std::endl;
+            board->print();
+            ++(*n_solutions);
         }
+        return;
+    }
+    if (pop_count_ull(board->player) == n_discs_half){
+        board->opponent ^= discs;
+            generate_check_boards(board, 0, n_discs_half, n_solutions);
+        board->opponent ^= discs;
+    } else if (pop_count_ull(board->opponent) == n_discs_half){
+        board->player ^= discs;
+            generate_check_boards(board, 0, n_discs_half, n_solutions);
+        board->player ^= discs;
+    } else{
+        uint64_t cell_bit = 1ULL << ctz(discs);
+        discs ^= cell_bit;
+        board->player ^= cell_bit;
+            generate_check_boards(board, discs, n_discs_half, n_solutions);
+        board->player ^= cell_bit;
+        board->opponent ^= cell_bit;
+            generate_check_boards(board, discs, n_discs_half, n_solutions);
+        board->opponent ^= cell_bit;
     }
 }
-
 
 // generate silhouettes
 void find_draw(uint64_t discs, int depth, uint64_t put_cells, uint64_t *n_solutions){
@@ -75,7 +75,10 @@ void find_draw(uint64_t discs, int depth, uint64_t put_cells, uint64_t *n_soluti
             n_visited &= discs;
         }
         if (visited == discs){ // all discs are connected
-            generate_check_boards(discs, n_solutions);
+            Board board;
+            board.player = 0;
+            board.opponent = 0;
+            generate_check_boards(&board, discs, pop_count_ull(discs) / 2, n_solutions);
         }
         return;
     }
@@ -123,7 +126,7 @@ int main(int argc, char* argv[]){
         0x0000000000000080ULL
     };
     
-    for (int depth = 2; depth <= 20; depth += 2){
+    for (int depth = 4; depth <= 8; depth += 2){
         uint64_t strt = tim();
         uint64_t n_solutions = 0;
         for (uint64_t condition: conditions){
