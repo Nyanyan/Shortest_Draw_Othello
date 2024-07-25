@@ -23,6 +23,12 @@ void output_transcript(std::vector<int> &transcript){
         std::cout << idx_to_coord(move);
     }
     std::cout << std::endl;
+    
+    for (int &move: transcript){
+        std::cerr << idx_to_coord(move);
+    }
+    std::cerr << std::endl;
+    
 }
 
 /***** from https://github.com/Nyanyan/Reverse_Othello start *****/
@@ -377,12 +383,12 @@ int main(int argc, char* argv[]){
     // need 1 or more full line to cause gameover by draw  (because there are both black and white discs)
     std::vector<uint64_t> conditions = {
         // horizontal
-        0x0000000000FF0000ULL,
-        0x00000000FF000000ULL,
+        //0x0000000000FF0000ULL,
+        //0x00000000FF000000ULL,
         // diagonal 9
-        0x0000008040201008ULL,
-        0x0000804020100804ULL,
-        0x0080402010080402ULL,
+        //0x0000008040201008ULL,
+        //0x0000804020100804ULL,
+        //0x0080402010080402ULL,
         0x8040201008040201ULL
 
 
@@ -415,6 +421,7 @@ int main(int argc, char* argv[]){
         }
         */
         std::cout << "depth " << depth << " n_silhouettes " << n_silhouettes << " n_boards " << n_boards << " n_solutions " << n_solutions << " time " << tim() - strt << " ms" << std::endl;
+        std::cerr << "depth " << depth << " n_silhouettes " << n_silhouettes << " n_boards " << n_boards << " n_solutions " << n_solutions << " time " << tim() - strt << " ms" << std::endl;
     }
     return 0;
 }
