@@ -377,19 +377,22 @@ int main(int argc, char* argv[]){
     // need 1 or more full line to cause gameover by draw  (because there are both black and white discs)
     std::vector<uint64_t> conditions = {
         // horizontal
-        //0x00000000000000FFULL,
-        //0x000000000000FF00ULL,
         0x0000000000FF0000ULL,
         0x00000000FF000000ULL,
-
         // diagonal 9
-        //0x0000000000804020ULL,
-        //0x0000000080402010ULL,
         0x0000008040201008ULL,
         0x0000804020100804ULL,
         0x0080402010080402ULL,
         0x8040201008040201ULL
 
+
+        // not connected
+        // horizontal
+        //0x00000000000000FFULL,
+        //0x000000000000FF00ULL,
+        // diagonal 9
+        //0x0000000000804020ULL,
+        //0x0000000080402010ULL,
         // corner
         //0x0000000000000080ULL
     };
