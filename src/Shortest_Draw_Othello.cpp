@@ -26,49 +26,42 @@ void output_transcript(std::vector<int> &transcript){
     std::cout << std::endl;
 }
 
-void find_draw(Board &board, int depth, std::vector<int> &transcript){
+void enumerate_draw_boards(uint64_t discs, int depth, uint64_t *put_cells, std::vector<uint64_t> &silhouettes){
     if (depth == 0){
-        if (board.is_end() && board.score_player() == 0){
-            output_transcript(transcript);
+        silhouettes.emplace_back(discs);
+        return;
+    }
+    uint64_t neighbours = 0;
+    neighbours |= (discs & 0x7F7F7F7F7F7F7F7FULL) << 1;
+    neighbours |= (discs & 0xFEFEFEFEFEFEFEFEULL) >> 1;
+    neighbours |= (discs & 0x00FFFFFFFFFFFFFFULL) << 8;
+    neighbours |= (discs & 0xFFFFFFFFFFFFFF00ULL) >> 8;
+    neighbours |= (discs & 0x00FEFEFEFEFEFEFEULL) << 7;
+    neighbours |= (discs & 0x7F7F7F7F7F7F7F00ULL) >> 7;
+    neighbours |= (discs & 0x007F7F7F7F7F7F7FULL) << 9;
+    neighbours |= (discs & 0xFEFEFEFEFEFEFE00ULL) >> 9;
+    neighbours &= ~discs;
+    neighbours &= ~(*put_cells);
+    if (neighbours){
+        for (uint_fast8_t cell = first_bit(&neighbours); neighbours; cell = next_bit(&neighbours)){
+            *put_cells ^= 1ULL << cell;
+            discs ^= 1ULL << cell;
+                enumerate_draw_boards(discs, depth - 1, put_cells, silhouettes);
+            discs ^= 1ULL << cell;
+            *put_cells ^= 1ULL << cell;
         }
-        return;
-    }
-    if (board.is_end()){
-        return;
-    }
-    uint64_t legal = board.get_legal();
-    if (legal == 0){
-        board.pass();
-        legal = board.get_legal();
-    }
-    Flip flip;
-    for (uint_fast8_t cell = first_bit(&legal); legal; cell = next_bit(&legal)){
-        calc_flip(&flip, &board, cell);
-        board.move_board(&flip);
-        transcript.emplace_back(cell);
-            find_draw(board, depth - 1, transcript);
-        transcript.pop_back();
-        board.undo_board(&flip);
     }
 }
 
 int main(int argc, char* argv[]){
     init();
-    Board board;
-    Flip flip;
-    std::vector<int> transcript;
-    board.reset();
-
-    // play f5
-    calc_flip(&flip, &board, 26);
-    board.move_board(&flip);
-    transcript.emplace_back(26);
-
-    for (int depth = 1; depth <= 20; ++depth){
-        uint64_t strt = tim();
-        std::cout << "start depth " << depth << std::endl;
-        find_draw(board, depth - 1, transcript);
-        std::cout << "finish depth " << depth << " in " << tim() - strt << " ms" << std::endl;
+    
+    for (int depth = 0; depth <= 20; depth += 2){
+        std::vector<uint64_t> silhouettes;
+        uint64_t discs = 0x0000001818000000ULL;
+        uint64_t put_cells = 0;
+        enumerate_draw_boards(discs, depth, &put_cells, silhouettes);
+        std::cerr << "depth " << depth << " n_silhouettes " << silhouettes.size() << std::endl;
     }
     return 0;
 }
