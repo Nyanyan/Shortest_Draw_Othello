@@ -26,7 +26,7 @@ void output_transcript(std::vector<int> &transcript){
     std::cout << std::endl;
 }
 
-void enumerate_draw_boards(uint64_t discs, int depth, uint64_t *put_cells, std::vector<uint64_t> &silhouettes){
+void enumerate_draw_boards(uint64_t discs, int depth, uint64_t put_cells, std::vector<uint64_t> &silhouettes){
     if (depth == 0){
         silhouettes.emplace_back(discs);
         return;
@@ -41,14 +41,13 @@ void enumerate_draw_boards(uint64_t discs, int depth, uint64_t *put_cells, std::
     neighbours |= (discs & 0x007F7F7F7F7F7F7FULL) << 9;
     neighbours |= (discs & 0xFEFEFEFEFEFEFE00ULL) >> 9;
     neighbours &= ~discs;
-    neighbours &= ~(*put_cells);
+    neighbours &= ~put_cells;
     if (neighbours){
         for (uint_fast8_t cell = first_bit(&neighbours); neighbours; cell = next_bit(&neighbours)){
-            *put_cells ^= 1ULL << cell;
+            put_cells ^= 1ULL << cell;
             discs ^= 1ULL << cell;
                 enumerate_draw_boards(discs, depth - 1, put_cells, silhouettes);
             discs ^= 1ULL << cell;
-            *put_cells ^= 1ULL << cell;
         }
     }
 }
@@ -56,12 +55,13 @@ void enumerate_draw_boards(uint64_t discs, int depth, uint64_t *put_cells, std::
 int main(int argc, char* argv[]){
     init();
     
-    for (int depth = 0; depth <= 20; depth += 2){
+    for (int depth = 2; depth <= 20; depth += 2){
+        uint64_t strt = tim();
         std::vector<uint64_t> silhouettes;
-        uint64_t discs = 0x0000001818000000ULL;
+        uint64_t discs = 0x000000181C000000ULL; // f5
         uint64_t put_cells = 0;
-        enumerate_draw_boards(discs, depth, &put_cells, silhouettes);
-        std::cerr << "depth " << depth << " n_silhouettes " << silhouettes.size() << std::endl;
+        enumerate_draw_boards(discs, depth - 1, put_cells, silhouettes);
+        std::cerr << "depth " << depth << " n_silhouettes " << silhouettes.size() << " in " << tim() - strt << " ms" << std::endl;
     }
     return 0;
 }
