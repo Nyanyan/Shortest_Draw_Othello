@@ -421,12 +421,12 @@ int main(int argc, char* argv[]){
     std::vector<uint64_t> conditions = {
         // connected
         // horizontal
-        //0x0000000000FF0000ULL, // a5-h5
-        //0x00000000FF000000ULL, // a6-h6
+        0x0000000000FF0000ULL // a6-h6
+        //0x00000000FF000000ULL, // a5-h5
         // diagonal 9
         //0x0000008040201008ULL, // a4-e8
         //0x0000804020100804ULL, // a3-f8
-        0x0080402010080402ULL // a2-g8
+        //0x0080402010080402ULL // a2-g8 done
         //0x8040201008040201ULL // a1-h8 done
 
 

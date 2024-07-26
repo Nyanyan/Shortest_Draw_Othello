@@ -1,0 +1,13 @@
+depth 4 n_silhouettes 0 n_boards 0 n_solutions 0 time 0 ms
+depth 6 n_silhouettes 0 n_boards 0 n_solutions 0 time 0 ms
+depth 8 n_silhouettes 1 n_boards 0 n_solutions 0 time 0 ms
+depth 10 n_silhouettes 69 n_boards 0 n_solutions 0 time 0 ms
+depth 12 n_silhouettes 2895 n_boards 0 n_solutions 0 time 2 ms
+depth 14 n_silhouettes 71048 n_boards 104 n_solutions 0 time 93 ms
+depth 16 n_silhouettes 1185839 n_boards 1014 n_solutions 0 time 2681 ms
+depth 18 n_silhouettes 14729504 n_boards 6787 n_solutions 0 time 60108 ms
+e6d6c3f6g7g6c6g8h6b2f8g5h8c7g4c5b6a6a1e3
+e6d6c3f6g7g6c6g8h6b2f8g5h8c5g4c7b6a6a1e3
+e6d6c3f6g7g6c6g8h6b2f8g5h8c5g4b7b6a6a1e3
+e6d6c3f6g7g6c6g8h6b2f8c5a1g5b6a6h8b5g4e3
+depth 20 n_silhouettes 143365657 n_boards 51449 n_solutions 4 time 1178483 ms
