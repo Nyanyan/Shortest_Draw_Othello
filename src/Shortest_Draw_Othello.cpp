@@ -433,7 +433,7 @@ int main(int argc, char* argv[]){
         // not connected
         // horizontal
         0x00000000000000FFULL // a8-h8
-        //0x000000000000FF00ULL, // a7-h7
+        //0x000000000000FF00ULL // a7-h7 done
         // diagonal 9
         //0x0000000000804020ULL, // a6-c8
         //0x0000000080402010ULL, // a5-d8
