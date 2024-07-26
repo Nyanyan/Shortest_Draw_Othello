@@ -5,7 +5,7 @@ Find the shortest Draw in Othello
 
 ## Full Solution
 
-ai-a8 line
+ai-a8 line (20 moves)
 
 ```
 f5f4c3f6g7f7f3h7f8b2h6e7h8g3d7e3f2f1a1c5
