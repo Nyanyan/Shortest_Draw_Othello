@@ -9,6 +9,7 @@
 */
 
 #include <iostream>
+#include <unordered_set>
 #include "engine/board.hpp"
 #include "engine/util.hpp"
 
@@ -315,7 +316,7 @@ uint64_t get_neighbour_discs(uint64_t discs){
 }
 
 // generate silhouettes
-void generate_silhouettes(uint64_t discs, int depth, uint64_t put_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions){
+void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions){
     if (depth == 0){
         /*
         // check wether all discs are connected
@@ -366,13 +367,27 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t put_cells, uint64_
     neighbours |= ((discs & 0x007F7F7F7F7F7F7FULL) << 9) & ((discs & 0x00003F3F3F3F3F3FULL) << 18);
     neighbours |= ((discs & 0xFEFEFEFEFEFEFE00ULL) >> 9) & ((discs & 0xFCFCFCFCFCFC0000ULL) >> 18);
     neighbours &= ~discs;
-    neighbours &= ~put_cells;
-    if (neighbours){
-        for (uint_fast8_t cell = first_bit(&neighbours); neighbours; cell = next_bit(&neighbours)){
-            put_cells ^= 1ULL << cell;
-            discs ^= 1ULL << cell;
-                generate_silhouettes(discs, depth - 1, put_cells, n_silhouettes, n_boards, n_solutions);
-            discs ^= 1ULL << cell;
+    uint64_t puttable = neighbours & ~seen_cells;
+    bool b_mirror = false, w_mirror = false, h_mirror = false, v_mirror = false;
+    if (black_line_mirror(discs) == discs){
+        puttable &= 0xFFFEFCF8F0E0C080ULL;
+    }
+    if (white_line_mirror(discs) == discs){
+        puttable &= 0xFF7F3F1F0F070301ULL;
+    }
+    if (horizontal_mirror(discs) == discs){
+        puttable &= 0x0F0F0F0F0F0F0F0FULL;
+    }
+    if (vertical_mirror(discs) == discs){
+        puttable &= 0xFFFFFFFF00000000ULL;
+    }
+    if (puttable){
+        for (uint_fast8_t cell = first_bit(&puttable); puttable; cell = next_bit(&puttable)){
+            uint64_t cell_bit = 1ULL << cell;
+            seen_cells ^= cell_bit;
+            discs ^= cell_bit;
+                generate_silhouettes(discs, depth - 1, seen_cells, n_silhouettes, n_boards, n_solutions);
+            discs ^= cell_bit;
         }
     }
 }
@@ -382,14 +397,15 @@ int main(int argc, char* argv[]){
 
     // need 1 or more full line to cause gameover by draw  (because there are both black and white discs)
     std::vector<uint64_t> conditions = {
+        // connected
         // horizontal
         //0x0000000000FF0000ULL,
         //0x00000000FF000000ULL,
         // diagonal 9
         //0x0000008040201008ULL,
         //0x0000804020100804ULL,
-        //0x0080402010080402ULL,
-        0x8040201008040201ULL
+        0x0080402010080402ULL // a2-g8
+        //0x8040201008040201ULL // a1-h8 done
 
 
         // not connected
@@ -406,20 +422,14 @@ int main(int argc, char* argv[]){
     for (int depth = 4; depth <= 20; depth += 2){
         uint64_t strt = tim();
         uint64_t n_silhouettes = 0, n_boards = 0, n_solutions = 0;
+        std::unordered_set<uint64_t> seen_silhouettes;
         for (uint64_t condition: conditions){
             uint64_t discs = condition | 0x0000001818000000ULL;
-            uint64_t put_cells = 0;
+            uint64_t seen_cells = 0;
             if (depth + 4 - pop_count_ull(discs) >= 0){
-                generate_silhouettes(discs, depth + 4 - pop_count_ull(discs), put_cells, &n_silhouettes, &n_boards, &n_solutions);
+                generate_silhouettes(discs, depth + 4 - pop_count_ull(discs), seen_cells, &n_silhouettes, &n_boards, &n_solutions);
             }
         }
-        /*
-        uint64_t discs = 0x8040201008040201ULL | 0x0000001818000000ULL;
-        uint64_t put_cells = 0;
-        if (depth + 4 - pop_count_ull(discs) >= 0){
-            generate_silhouettes(discs, depth + 4 - pop_count_ull(discs), put_cells, &n_silhouettes, &n_boards, &n_solutions);
-        }
-        */
         std::cout << "depth " << depth << " n_silhouettes " << n_silhouettes << " n_boards " << n_boards << " n_solutions " << n_solutions << " time " << tim() - strt << " ms" << std::endl;
         std::cerr << "depth " << depth << " n_silhouettes " << n_silhouettes << " n_boards " << n_boards << " n_solutions " << n_solutions << " time " << tim() - strt << " ms" << std::endl;
     }
