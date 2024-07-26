@@ -3,6 +3,21 @@ Find the shortest Draw in Othello
 
 
 
+## Full Solution
+
+ai-a8 line
+
+```
+f5f4c3f6g7f7f3h7f8b2h6e7h8g3d7e3f2f1a1c5
+f5f4c3f6g7f7f3h7f8b2h6e7h8e3d7g3f2f1a1c5
+f5f4c3f6g7f7f3h7f8b2h6e7h8e3d7g2f2f1a1c5
+f5f4c3f6g7f7f3h7f8b2h6e3a1e7f2f1h8e2d7c5
+```
+
+
+
+
+
 ## License
 
 GPL-3.0
