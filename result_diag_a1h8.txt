@@ -1,0 +1,25 @@
+depth 4 n_silhouettes 0 n_boards 0 n_solutions 0 time 0 ms
+depth 6 n_silhouettes 1 n_boards 6 n_solutions 0 time 0 ms
+depth 8 n_silhouettes 67 n_boards 25 n_solutions 0 time 0 ms
+depth 10 n_silhouettes 2041 n_boards 0 n_solutions 0 time 2 ms
+depth 12 n_silhouettes 44427 n_boards 719 n_solutions 0 time 53 ms
+depth 14 n_silhouettes 732581 n_boards 2958 n_solutions 0 time 1182 ms
+depth 16 n_silhouettes 9583813 n_boards 25668 n_solutions 0 time 24005 ms
+depth 18 n_silhouettes 101915986 n_boards 164888 n_solutions 0 time 459196 ms
+e6d6c3f6g7g6c6g8h6b2f8g5h8c7g4c5b6a6a1e3
+e6d6c3f6g7g6c6g8h6b2f8g5h8c5g4c7b6a6a1e3
+e6d6c3f6g7g6c6g8h6b2f8g5h8c5g4b7b6a6a1e3
+e6d6c3f6g7g6c6g8h6b2f8c5a1g5b6a6h8b5g4e3
+c4c5f6c3b2c2c6a2c1g7a3d6h8d2c7c8a1d7e2f4
+c4c5f6c3b2c2c6a2c1g7a3d2a1d6e2b7c7c8h8f4
+c4c5f6c3b2c2c6a2c1g7a3d2a1d6e2b6c7c8h8f4
+c4c5f6c3b2c2c6a2c1g7a3d2a1b6e2d6c7c8h8f4
+d3e3f6c3b2b3f3b1a3g7c1f4h8b4g3h3a1g4b5d6
+d3e3f6c3b2b3f3b1a3g7c1b4a1f4b5g2g3h3h8d6
+d3e3f6c3b2b3f3b1a3g7c1b4a1f4b5f2g3h3h8d6
+d3e3f6c3b2b3f3b1a3g7c1b4a1f2b5f4g3h3h8d6
+f5f4c3f6g7f7f3h7f8b2h6e7h8g3d7e3f2f1a1c5
+f5f4c3f6g7f7f3h7f8b2h6e7h8e3d7g3f2f1a1c5
+f5f4c3f6g7f7f3h7f8b2h6e7h8e3d7g2f2f1a1c5
+f5f4c3f6g7f7f3h7f8b2h6e3a1e7f2f1h8e2d7c5
+depth 20 n_silhouettes 889972936 n_boards 769306 n_solutions 16 time 8141410 ms
