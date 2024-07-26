@@ -315,8 +315,25 @@ uint64_t get_neighbour_discs(uint64_t discs){
     return neighbours;
 }
 
+uint64_t get_unique_discs(uint64_t discs){
+    uint64_t res = discs;
+    res = std::min(res, vertical_mirror(discs));
+    res = std::min(res, horizontal_mirror(discs));
+    res = std::min(res, black_line_mirror(discs));
+    res = std::min(res, white_line_mirror(discs));
+    res = std::min(res, rotate_90(discs));
+    res = std::min(res, rotate_180(discs));
+    res = std::min(res, rotate_270(discs));
+    return res;
+}
+
 // generate silhouettes
-void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions){
+void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions, std::unordered_set<uint64_t> &seen_silhouettes){
+    uint64_t unique_discs = get_unique_discs(discs);
+    if (seen_silhouettes.find(unique_discs) != seen_silhouettes.end()){
+        return;
+    }
+    seen_silhouettes.emplace(unique_discs);
     if (depth == 0){
         /*
         // check wether all discs are connected
@@ -386,7 +403,7 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
             uint64_t cell_bit = 1ULL << cell;
             seen_cells ^= cell_bit;
             discs ^= cell_bit;
-                generate_silhouettes(discs, depth - 1, seen_cells, n_silhouettes, n_boards, n_solutions);
+                generate_silhouettes(discs, depth - 1, seen_cells, n_silhouettes, n_boards, n_solutions, seen_silhouettes);
             discs ^= cell_bit;
         }
     }
@@ -427,7 +444,7 @@ int main(int argc, char* argv[]){
             uint64_t discs = condition | 0x0000001818000000ULL;
             uint64_t seen_cells = 0;
             if (depth + 4 - pop_count_ull(discs) >= 0){
-                generate_silhouettes(discs, depth + 4 - pop_count_ull(discs), seen_cells, &n_silhouettes, &n_boards, &n_solutions);
+                generate_silhouettes(discs, depth + 4 - pop_count_ull(discs), seen_cells, &n_silhouettes, &n_boards, &n_solutions, seen_silhouettes);
             }
         }
         std::cout << "depth " << depth << " n_silhouettes " << n_silhouettes << " n_boards " << n_boards << " n_solutions " << n_solutions << " time " << tim() - strt << " ms" << std::endl;
