@@ -1,0 +1,9 @@
+depth 4 n_silhouettes 0 n_boards 0 n_solutions 0 time 0 ms
+depth 6 n_silhouettes 1 n_boards 0 n_solutions 0 time 0 ms
+depth 8 n_silhouettes 54 n_boards 0 n_solutions 0 time 0 ms
+depth 10 n_silhouettes 2008 n_boards 1 n_solutions 0 time 2 ms
+depth 12 n_silhouettes 46463 n_boards 92 n_solutions 0 time 49 ms
+depth 14 n_silhouettes 758366 n_boards 994 n_solutions 0 time 1239 ms
+depth 16 n_silhouettes 9391084 n_boards 6913 n_solutions 0 time 26273 ms
+depth 18 n_silhouettes 91947239 n_boards 43271 n_solutions 0 time 485447 ms
+depth 20 n_silhouettes 728762483 n_boards 230120 n_solutions 0 time 8060273 ms
