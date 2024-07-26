@@ -328,12 +328,12 @@ uint64_t get_unique_discs(uint64_t discs){
 }
 
 // generate silhouettes
-void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions, std::unordered_set<uint64_t> &seen_silhouettes){
+void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions, std::unordered_set<uint64_t> &seen_unique_discs){
     uint64_t unique_discs = get_unique_discs(discs);
-    if (seen_silhouettes.find(unique_discs) != seen_silhouettes.end()){
+    if (seen_unique_discs.find(unique_discs) != seen_unique_discs.end()){
         return;
     }
-    seen_silhouettes.emplace(unique_discs);
+    seen_unique_discs.emplace(unique_discs);
     if (depth == 0){
         /*
         // check wether all discs are connected
@@ -385,7 +385,7 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
     neighbours |= ((discs & 0xFEFEFEFEFEFEFE00ULL) >> 9) & ((discs & 0xFCFCFCFCFCFC0000ULL) >> 18);
     neighbours &= ~discs;
     uint64_t puttable = neighbours & ~seen_cells;
-    bool b_mirror = false, w_mirror = false, h_mirror = false, v_mirror = false;
+    /*
     if (black_line_mirror(discs) == discs){
         puttable &= 0xFFFEFCF8F0E0C080ULL;
     }
@@ -398,12 +398,13 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
     if (vertical_mirror(discs) == discs){
         puttable &= 0xFFFFFFFF00000000ULL;
     }
+    */
     if (puttable){
         for (uint_fast8_t cell = first_bit(&puttable); puttable; cell = next_bit(&puttable)){
             uint64_t cell_bit = 1ULL << cell;
             seen_cells ^= cell_bit;
             discs ^= cell_bit;
-                generate_silhouettes(discs, depth - 1, seen_cells, n_silhouettes, n_boards, n_solutions, seen_silhouettes);
+                generate_silhouettes(discs, depth - 1, seen_cells, n_silhouettes, n_boards, n_solutions, seen_unique_discs);
             discs ^= cell_bit;
         }
     }
@@ -439,12 +440,12 @@ int main(int argc, char* argv[]){
     for (int depth = 4; depth <= 20; depth += 2){
         uint64_t strt = tim();
         uint64_t n_silhouettes = 0, n_boards = 0, n_solutions = 0;
-        std::unordered_set<uint64_t> seen_silhouettes;
+        std::unordered_set<uint64_t> seen_unique_discs;
         for (uint64_t condition: conditions){
             uint64_t discs = condition | 0x0000001818000000ULL;
             uint64_t seen_cells = 0;
             if (depth + 4 - pop_count_ull(discs) >= 0){
-                generate_silhouettes(discs, depth + 4 - pop_count_ull(discs), seen_cells, &n_silhouettes, &n_boards, &n_solutions, seen_silhouettes);
+                generate_silhouettes(discs, depth + 4 - pop_count_ull(discs), seen_cells, &n_silhouettes, &n_boards, &n_solutions, seen_unique_discs);
             }
         }
         std::cout << "depth " << depth << " n_silhouettes " << n_silhouettes << " n_boards " << n_boards << " n_solutions " << n_solutions << " time " << tim() - strt << " ms" << std::endl;
