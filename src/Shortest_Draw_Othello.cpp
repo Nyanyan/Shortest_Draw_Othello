@@ -421,24 +421,24 @@ int main(int argc, char* argv[]){
     std::vector<uint64_t> conditions = {
         // connected
         // horizontal
-        //0x0000000000FF0000ULL,
-        //0x00000000FF000000ULL,
+        //0x0000000000FF0000ULL, // a5-h5
+        //0x00000000FF000000ULL, // a6-h6
         // diagonal 9
-        //0x0000008040201008ULL,
-        //0x0000804020100804ULL,
+        //0x0000008040201008ULL, // a4-e8
+        //0x0000804020100804ULL, // a3-f8
         0x0080402010080402ULL // a2-g8
         //0x8040201008040201ULL // a1-h8 done
 
 
         // not connected
         // horizontal
-        //0x00000000000000FFULL,
-        //0x000000000000FF00ULL,
+        //0x00000000000000FFULL, // a8-h8
+        //0x000000000000FF00ULL, // a7-h7
         // diagonal 9
-        //0x0000000000804020ULL,
-        //0x0000000080402010ULL,
+        //0x0000000000804020ULL, // a6-c8
+        //0x0000000080402010ULL, // a5-d8
         // corner
-        //0x0000000000000080ULL
+        //0x0000000000000001ULL // h8
     };
     
     for (int depth = 4; depth <= 20; depth += 2){
