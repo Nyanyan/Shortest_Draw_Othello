@@ -248,7 +248,6 @@ constexpr uint64_t bit_neighbour[HW2] = {
 
 
 // generate draw endgame
-// nCr(24, 12) = 2.7e6 <= small enough to generate all boards and check game over
 void generate_boards(Board *board, uint64_t any_color_discs, uint64_t fixed_color_discs, int n_discs_half, uint64_t *n_boards, uint64_t *n_solutions){
     if (any_color_discs == 0 && fixed_color_discs == 0){
         if (board->is_end()){ // game over
@@ -327,51 +326,56 @@ uint64_t get_unique_discs(uint64_t discs){
     return res;
 }
 
+// check whether all discs are connected
+bool check_all_connected(uint64_t discs){
+    uint64_t visited = 0;
+    uint64_t n_visited = 1ULL << ctz(discs);
+    while (visited != n_visited){
+        visited = n_visited;
+        n_visited |= (visited & 0x7F7F7F7F7F7F7F7FULL) << 1;
+        n_visited |= (visited & 0xFEFEFEFEFEFEFEFEULL) >> 1;
+        n_visited |= (visited & 0x00FFFFFFFFFFFFFFULL) << 8;
+        n_visited |= (visited & 0xFFFFFFFFFFFFFF00ULL) >> 8;
+        n_visited |= (visited & 0x00FEFEFEFEFEFEFEULL) << 7;
+        n_visited |= (visited & 0x7F7F7F7F7F7F7F00ULL) >> 7;
+        n_visited |= (visited & 0x007F7F7F7F7F7F7FULL) << 9;
+        n_visited |= (visited & 0xFEFEFEFEFEFEFE00ULL) >> 9;
+        n_visited &= discs;
+    }
+    return visited == discs;
+}
+
 // generate silhouettes
-void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions, std::unordered_set<uint64_t> &seen_unique_discs){
+void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions, std::unordered_set<uint64_t> &seen_unique_discs, bool connected){
     uint64_t unique_discs = get_unique_discs(discs);
     if (seen_unique_discs.find(unique_discs) != seen_unique_discs.end()){
         return;
     }
     seen_unique_discs.emplace(unique_discs);
     if (depth == 0){
-        /*
-        // check wether all discs are connected
-        uint64_t visited = 0;
-        uint64_t n_visited = 1ULL << ctz(discs);
-        while (visited != n_visited){
-            visited = n_visited;
-            n_visited |= (visited & 0x7F7F7F7F7F7F7F7FULL) << 1;
-            n_visited |= (visited & 0xFEFEFEFEFEFEFEFEULL) >> 1;
-            n_visited |= (visited & 0x00FFFFFFFFFFFFFFULL) << 8;
-            n_visited |= (visited & 0xFFFFFFFFFFFFFF00ULL) >> 8;
-            n_visited |= (visited & 0x00FEFEFEFEFEFEFEULL) << 7;
-            n_visited |= (visited & 0x7F7F7F7F7F7F7F00ULL) >> 7;
-            n_visited |= (visited & 0x007F7F7F7F7F7F7FULL) << 9;
-            n_visited |= (visited & 0xFEFEFEFEFEFEFE00ULL) >> 9;
-            n_visited &= discs;
+        if (!connected){
+            connected = check_all_connected(discs);
         }
-        if (visited == discs){ // all discs are connected
-        */
-        ++(*n_silhouettes);
-        uint64_t any_color_discs = 0;
-        uint64_t discs_copy = discs;
-        for (uint_fast8_t cell = first_bit(&discs_copy); discs_copy; cell = next_bit(&discs_copy)){
-            for (int i = 0; i < 4; ++i){
-                if ((discs & bit_line[cell][i]) == bit_line[cell][i]){
-                    any_color_discs |= 1ULL << cell;
+        if (connected){
+            ++(*n_silhouettes);
+            uint64_t any_color_discs = 0;
+            uint64_t discs_copy = discs;
+            for (uint_fast8_t cell = first_bit(&discs_copy); discs_copy; cell = next_bit(&discs_copy)){
+                for (int i = 0; i < 4; ++i){
+                    if ((discs & bit_line[cell][i]) == bit_line[cell][i]){
+                        any_color_discs |= 1ULL << cell;
+                    }
                 }
             }
+            uint64_t fixed_color_discs = discs & ~any_color_discs;
+            if (any_color_discs){
+                Board board;
+                board.player = 1ULL << ctz(any_color_discs);
+                board.opponent = 0;
+                any_color_discs &= ~board.player;
+                generate_boards(&board, any_color_discs, fixed_color_discs, pop_count_ull(discs) / 2, n_boards, n_solutions);
+            }
         }
-        uint64_t fixed_color_discs = discs & ~any_color_discs;
-        if (any_color_discs){
-            Board board;
-            board.player = 1ULL << ctz(any_color_discs);
-            board.opponent = 0;
-            any_color_discs &= ~board.player;
-            generate_boards(&board, any_color_discs, fixed_color_discs, pop_count_ull(discs) / 2, n_boards, n_solutions);
-        }
-        //}
         return;
     }
     uint64_t neighbours = 0;
@@ -404,7 +408,7 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
             uint64_t cell_bit = 1ULL << cell;
             seen_cells ^= cell_bit;
             discs ^= cell_bit;
-                generate_silhouettes(discs, depth - 1, seen_cells, n_silhouettes, n_boards, n_solutions, seen_unique_discs);
+                generate_silhouettes(discs, depth - 1, seen_cells, n_silhouettes, n_boards, n_solutions, seen_unique_discs, connected);
             discs ^= cell_bit;
         }
     }
@@ -445,7 +449,7 @@ int main(int argc, char* argv[]){
             uint64_t discs = condition | 0x0000001818000000ULL;
             uint64_t seen_cells = 0;
             if (depth + 4 - pop_count_ull(discs) >= 0){
-                generate_silhouettes(discs, depth + 4 - pop_count_ull(discs), seen_cells, &n_silhouettes, &n_boards, &n_solutions, seen_unique_discs);
+                generate_silhouettes(discs, depth + 4 - pop_count_ull(discs), seen_cells, &n_silhouettes, &n_boards, &n_solutions, seen_unique_discs, check_all_connected(discs));
             }
         }
         std::cout << "depth " << depth << " n_silhouettes " << n_silhouettes << " n_boards " << n_boards << " n_solutions " << n_solutions << " time " << tim() - strt << " ms" << std::endl;
