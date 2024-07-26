@@ -421,11 +421,11 @@ int main(int argc, char* argv[]){
     std::vector<uint64_t> conditions = {
         // connected
         // horizontal
-        0x0000000000FF0000ULL // a6-h6
-        //0x00000000FF000000ULL, // a5-h5
+        //0x0000000000FF0000ULL // a6-h6 done
+        //0x00000000FF000000ULL // a5-h5 done
         // diagonal 9
         //0x0000008040201008ULL, // a4-e8
-        //0x0000804020100804ULL, // a3-f8
+        0x0000804020100804ULL // a3-f8
         //0x0080402010080402ULL // a2-g8 done
         //0x8040201008040201ULL // a1-h8 done
 
@@ -440,6 +440,20 @@ int main(int argc, char* argv[]){
         // corner
         //0x0000000000000001ULL // h8
     };
+    for (uint64_t condition: conditions){
+        for (uint32_t i = 0; i < HW2; ++i){
+            std::cerr << (1 & (condition >> (HW2_M1 - i)));
+            if (i % HW == HW_M1)
+                std::cerr << std::endl;
+        }
+        std::cerr << std::endl;
+        for (uint32_t i = 0; i < HW2; ++i){
+            std::cout << (1 & (condition >> (HW2_M1 - i)));
+            if (i % HW == HW_M1)
+                std::cout << std::endl;
+        }
+        std::cout << std::endl;
+    }
     
     for (int depth = 4; depth <= 20; depth += 2){
         uint64_t strt = tim();
