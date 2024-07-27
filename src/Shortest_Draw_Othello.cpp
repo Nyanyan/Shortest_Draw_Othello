@@ -437,8 +437,9 @@ int main(int argc, char* argv[]){
         //0x00000000000000FFULL // a8-h8 done
         //0x000000000000FF00ULL // a7-h7 done
         // diagonal 9
-        0x0000000000804020ULL  // a6-c8
-        //0x0000000080402010ULL // a5-d8
+        //0x0000000000008040ULL // a7-b8
+        //0x0000000000804020ULL // a6-c8 done
+        //0x0000000080402010ULL // a5-d8 done
         // corner
         //0x0000000000000001ULL // h8
     };
