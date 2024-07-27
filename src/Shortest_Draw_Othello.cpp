@@ -352,10 +352,10 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
         return;
     }
     seen_unique_discs.emplace(unique_discs);
+    if (!connected){
+        connected = check_all_connected(discs);
+    }
     if (depth == 0){
-        if (!connected){
-            connected = check_all_connected(discs);
-        }
         if (connected){
             ++(*n_silhouettes);
             uint64_t any_color_discs = 0;
@@ -435,8 +435,8 @@ int main(int argc, char* argv[]){
         //0x00000000000000FFULL // a8-h8 done
         //0x000000000000FF00ULL // a7-h7 done
         // diagonal 9
-        0x0000000000804020ULL  // a6-c8
-        //0x0000000080402010ULL, // a5-d8
+        //0x0000000000804020ULL  // a6-c8
+        0x0000000080402010ULL // a5-d8
         // corner
         //0x0000000000000001ULL // h8
     };
