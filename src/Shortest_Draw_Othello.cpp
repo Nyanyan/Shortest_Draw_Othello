@@ -348,10 +348,12 @@ bool check_all_connected(uint64_t discs){
 // generate silhouettes
 void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions, std::unordered_set<uint64_t> &seen_unique_discs, bool connected){
     uint64_t unique_discs = get_unique_discs(discs);
-    if (seen_unique_discs.find(unique_discs) != seen_unique_discs.end()){
-        return;
+    if (pop_count_ull(discs) <= 4 + 18){
+        if (seen_unique_discs.find(unique_discs) != seen_unique_discs.end()){
+            return;
+        }
+        seen_unique_discs.emplace(unique_discs);
     }
-    seen_unique_discs.emplace(unique_discs);
     if (!connected){
         connected = check_all_connected(discs);
     }
