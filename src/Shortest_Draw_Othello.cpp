@@ -13,10 +13,42 @@
 #include "engine/board.hpp"
 #include "engine/util.hpp"
 
+#define N_SEEN_LINES 10
+
+constexpr uint64_t lines_dir[N_SEEN_LINES] = {
+    // horizontal
+    0x00000000000000FFULL, // a8-h8
+    0x000000000000FF00ULL, // a7-h7
+    0x0000000000FF0000ULL, // a6-h6
+    0x00000000FF000000ULL, // a5-h5
+    // diagonal 9
+    //0x0000000000008040ULL, // a7-b8
+    0x0000000000804020ULL, // a6-c8 done
+    0x0000000080402010ULL, // a5-d8 done
+    0x0000008040201008ULL, // a4-e8
+    0x0000804020100804ULL, // a3-f8
+    0x0080402010080402ULL, // a2-g8
+    0x8040201008040201ULL,  // a1-h8
+    // corner
+    //0x0000000000000080ULL, // a8
+};
+
+std::vector<uint64_t> lines;
+
+void lines_init(){
+    for (int i = 0; i < N_SEEN_LINES; ++i){
+        lines.emplace_back(lines_dir[i]);
+        lines.emplace_back(rotate_90(lines_dir[i]));
+        lines.emplace_back(rotate_180(lines_dir[i]));
+        lines.emplace_back(rotate_270(lines_dir[i]));
+    }
+}
+
 void init(){
     bit_init();
     mobility_init();
     flip_init();
+    lines_init();
 }
 
 void output_transcript(std::vector<int> &transcript){
@@ -345,8 +377,20 @@ bool check_all_connected(uint64_t discs){
     return visited == discs;
 }
 
+bool check_full_lines(uint64_t discs){
+    for (uint64_t &line: lines){
+        if ((discs & line) == line){
+            return true;
+        }
+    }
+    return false;
+}
+
 // generate silhouettes
 void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions, std::unordered_set<uint64_t> &seen_unique_discs, bool connected){
+    if (check_full_lines(discs)){ // full lines already seen
+        return;
+    }
     uint64_t unique_discs = get_unique_discs(discs);
     if (pop_count_ull(discs) <= 4 + 18){
         if (seen_unique_discs.find(unique_discs) != seen_unique_discs.end()){
@@ -416,6 +460,8 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
     }
 }
 
+
+
 int main(int argc, char* argv[]){
     init();
 
@@ -437,11 +483,11 @@ int main(int argc, char* argv[]){
         //0x00000000000000FFULL // a8-h8 done
         //0x000000000000FF00ULL // a7-h7 done
         // diagonal 9
-        //0x0000000000008040ULL // a7-b8
+        0x0000000000008040ULL // a7-b8
         //0x0000000000804020ULL // a6-c8 done
         //0x0000000080402010ULL // a5-d8 done
         // corner
-        //0x0000000000000001ULL // h8
+        //0x0000000000000080ULL // a8
     };
     for (uint64_t condition: conditions){
         for (uint32_t i = 0; i < HW2; ++i){
