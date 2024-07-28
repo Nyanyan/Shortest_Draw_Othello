@@ -487,11 +487,8 @@ int main(int argc, char* argv[]){
         //0x0000000080402010ULL // a5-d8 done
 
         // difficult a7-b8 0x0000000000008040ULL
-        0x0000000020408070ULL // a7-b8, b6-c5, c8-d8
-        //0x0000000080808070ULL // a7-b8, a5-a6, c8-d8
-
-        // difficult corner
-        //0x0000000000000080ULL // a8
+        //0x0000000020408070ULL // a7-b8, b6-c5, c8-d8
+        0x0000000080808070ULL // a7-b8, a5-a6, c8-d8
     };
     for (uint64_t condition: conditions){
         for (uint32_t i = 0; i < HW2; ++i){

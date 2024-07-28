@@ -1,0 +1,18 @@
+00000000
+00000000
+00000000
+00000000
+10000000
+10000000
+10000000
+01110000
+
+depth 4 n_silhouettes 0 n_boards 0 n_solutions 0 time 0 ms
+depth 6 n_silhouettes 0 n_boards 0 n_solutions 0 time 0 ms
+depth 8 n_silhouettes 4 n_boards 0 n_solutions 0 time 0 ms
+depth 10 n_silhouettes 519 n_boards 0 n_solutions 0 time 0 ms
+depth 12 n_silhouettes 18088 n_boards 133 n_solutions 0 time 8 ms
+depth 14 n_silhouettes 351416 n_boards 3282 n_solutions 0 time 209 ms
+depth 16 n_silhouettes 4829948 n_boards 30354 n_solutions 0 time 5119 ms
+depth 18 n_silhouettes 51431785 n_boards 264075 n_solutions 0 time 74082 ms
+depth 20 n_silhouettes 483678989 n_boards 2131152 n_solutions 0 time 805436 ms
