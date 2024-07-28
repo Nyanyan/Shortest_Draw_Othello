@@ -3,9 +3,9 @@ Find the shortest Draw in Othello
 
 
 
-## Full Solution
+## Result
 
-The shortest draw is 20 moves. There are 4 solutions:
+The shortest draw is 20 moves. There are 4 solutions and 2 final forms:
 
 ```
 f5f4c3f6g7f7f3h7f8b2h6e7h8g3d7e3f2f1a1c5
@@ -14,7 +14,13 @@ f5f4c3f6g7f7f3h7f8b2h6e7h8e3d7g2f2f1a1c5
 f5f4c3f6g7f7f3h7f8b2h6e3a1e7f2f1h8e2d7c5
 ```
 
+The first 3 solutions lead this:
 
+![final_form_1](image/final_form_1.png)
+
+The final solution leads this:
+
+![final_form_2](image/final_form_2.png)
 
 
 
