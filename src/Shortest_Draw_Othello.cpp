@@ -392,7 +392,7 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
     //    return;
     //}
     uint64_t unique_discs = get_unique_discs(discs);
-    if (pop_count_ull(discs) <= 4 + 18){
+    if (pop_count_ull(discs) <= 4 + 20){
         if (seen_unique_discs.find(unique_discs) != seen_unique_discs.end()){
             return;
         }
@@ -475,7 +475,7 @@ int main(int argc, char* argv[]){
         //0x0000008040201008ULL // a4-e8 done
         //0x0000804020100804ULL // a3-f8 done
         //0x0080402010080402ULL // a2-g8 done
-        //0x8040201008040201ULL // a1-h8 done
+        0x8040201008040201ULL // a1-h8 done
 
 
         // not connected
@@ -488,7 +488,7 @@ int main(int argc, char* argv[]){
 
         // difficult a7-b8 0x0000000000008040ULL
         //0x0000000020408070ULL // a7-b8, b6-c5, c8-d8
-        0x0000000080808070ULL // a7-b8, a5-a6, c8-d8
+        //0x0000000080808070ULL // a7-b8, a5-a6, c8-d8
     };
     for (uint64_t condition: conditions){
         for (uint32_t i = 0; i < HW2; ++i){

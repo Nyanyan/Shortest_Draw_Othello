@@ -1,0 +1,22 @@
+10000000
+01000000
+00100000
+00010000
+00001000
+00000100
+00000010
+00000001
+
+depth 4 n_silhouettes 0 n_boards 0 n_solutions 0 time 0 ms
+depth 6 n_silhouettes 1 n_boards 6 n_solutions 0 time 0 ms
+depth 8 n_silhouettes 21 n_boards 9 n_solutions 0 time 0 ms
+depth 10 n_silhouettes 529 n_boards 0 n_solutions 0 time 1 ms
+depth 12 n_silhouettes 11186 n_boards 581 n_solutions 0 time 15 ms
+depth 14 n_silhouettes 183448 n_boards 708 n_solutions 0 time 317 ms
+depth 16 n_silhouettes 2396817 n_boards 6464 n_solutions 0 time 6563 ms
+depth 18 n_silhouettes 25477092 n_boards 41392 n_solutions 0 time 122023 ms
+e6d6c3f6g7g6c6g8h6b2f8g5h8c7g4c5b6a6a1e3
+e6d6c3f6g7g6c6g8h6b2f8g5h8c5g4c7b6a6a1e3
+e6d6c3f6g7g6c6g8h6b2f8g5h8c5g4b7b6a6a1e3
+e6d6c3f6g7g6c6g8h6b2f8c5a1g5b6a6h8b5g4e3
+depth 20 n_silhouettes 222406300 n_boards 186475 n_solutions 4 time 2051052 ms
