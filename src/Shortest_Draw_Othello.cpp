@@ -388,9 +388,9 @@ bool check_full_lines(uint64_t discs){
 
 // generate silhouettes
 void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions, std::unordered_set<uint64_t> &seen_unique_discs, bool connected){
-    if (check_full_lines(discs)){ // full lines already seen
-        return;
-    }
+    //if (check_full_lines(discs)){ // full lines already seen
+    //    return;
+    //}
     uint64_t unique_discs = get_unique_discs(discs);
     if (pop_count_ull(discs) <= 4 + 18){
         if (seen_unique_discs.find(unique_discs) != seen_unique_discs.end()){
@@ -483,10 +483,14 @@ int main(int argc, char* argv[]){
         //0x00000000000000FFULL // a8-h8 done
         //0x000000000000FF00ULL // a7-h7 done
         // diagonal 9
-        0x0000000000008040ULL // a7-b8
         //0x0000000000804020ULL // a6-c8 done
         //0x0000000080402010ULL // a5-d8 done
-        // corner
+
+        // difficult a7-b8 0x0000000000008040ULL
+        0x0000000020408070ULL // a7-b8, b6-c5, c8-d8
+        //0x0000000080808070ULL // a7-b8, a5-a6, c8-d8
+
+        // difficult corner
         //0x0000000000000080ULL // a8
     };
     for (uint64_t condition: conditions){
