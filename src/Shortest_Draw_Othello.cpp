@@ -387,12 +387,12 @@ bool check_full_lines(uint64_t discs){
 }
 
 // generate silhouettes
-void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions, std::unordered_set<uint64_t> &seen_unique_discs, bool connected){
+void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions, std::unordered_set<uint64_t> &seen_unique_discs, bool connected, int max_memo_depth){
     //if (check_full_lines(discs)){ // full lines already seen
     //    return;
     //}
     uint64_t unique_discs = get_unique_discs(discs);
-    if (pop_count_ull(discs) <= 4 + 20){
+    if (pop_count_ull(discs) <= 4 + max_memo_depth){
         if (seen_unique_discs.find(unique_discs) != seen_unique_discs.end()){
             return;
         }
@@ -435,89 +435,67 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
     neighbours |= ((discs & 0xFEFEFEFEFEFEFE00ULL) >> 9) & ((discs & 0xFCFCFCFCFCFC0000ULL) >> 18);
     neighbours &= ~discs;
     uint64_t puttable = neighbours & ~seen_cells;
-    /*
-    if (black_line_mirror(discs) == discs){
-        puttable &= 0xFFFEFCF8F0E0C080ULL;
-    }
-    if (white_line_mirror(discs) == discs){
-        puttable &= 0xFF7F3F1F0F070301ULL;
-    }
-    if (horizontal_mirror(discs) == discs){
-        puttable &= 0x0F0F0F0F0F0F0F0FULL;
-    }
-    if (vertical_mirror(discs) == discs){
-        puttable &= 0xFFFFFFFF00000000ULL;
-    }
-    */
     if (puttable){
         for (uint_fast8_t cell = first_bit(&puttable); puttable; cell = next_bit(&puttable)){
             uint64_t cell_bit = 1ULL << cell;
             seen_cells ^= cell_bit;
             discs ^= cell_bit;
-                generate_silhouettes(discs, depth - 1, seen_cells, n_silhouettes, n_boards, n_solutions, seen_unique_discs, connected);
+                generate_silhouettes(discs, depth - 1, seen_cells, n_silhouettes, n_boards, n_solutions, seen_unique_discs, connected, max_memo_depth);
             discs ^= cell_bit;
         }
     }
 }
 
-
+struct Task{
+    uint64_t first_silhouette;
+    int max_memo_depth;
+};
 
 int main(int argc, char* argv[]){
     init();
 
     // need 1 or more full line to cause gameover by draw  (because there are both black and white discs)
-    std::vector<uint64_t> conditions = {
-        // connected
-        // horizontal
-        //0x0000000000FF0000ULL // a6-h6 done
-        //0x00000000FF000000ULL // a5-h5 done
-        // diagonal 9
-        //0x0000008040201008ULL // a4-e8 done
-        //0x0000804020100804ULL // a3-f8 done
-        //0x0080402010080402ULL // a2-g8 done
-        0x8040201008040201ULL // a1-h8 done
-
-
-        // not connected
-        // horizontal
-        //0x00000000000000FFULL // a8-h8 done
-        //0x000000000000FF00ULL // a7-h7 done
-        // diagonal 9
-        //0x0000000000804020ULL // a6-c8 done
-        //0x0000000080402010ULL // a5-d8 done
-
-        // difficult a7-b8 0x0000000000008040ULL
-        //0x0000000020408070ULL // a7-b8, b6-c5, c8-d8 done
-        //0x0000000080808070ULL // a7-b8, a5-a6, c8-d8 done
+    const std::vector<Task> tasks = {
+        {0x8040201008040201ULL | 0x0000001818000000ULL, 20}, // a1-h8 (4 solutions found at depth 20)
+        {0x0000000000FF0000ULL | 0x0000001818000000ULL, 20}, // a6-h6 (4 solutions (same as a1-h8 lines) found at depth 20)
+        /*
+        {0x00000000FF000000ULL | 0x0000001818000000ULL, 20}, // a5-h5
+        {0x0080402010080402ULL | 0x0000001818000000ULL, 20}, // a2-g8
+        {0x0000804020100804ULL | 0x0000001818000000ULL, 20}, // a3-f8
+        {0x0000008040201008ULL | 0x0000001818000000ULL, 20}, // a4-e8
+        {0x000000000000FF00ULL | 0x0000001818000000ULL, 20}, // a7-h7
+        {0x00000000000000FFULL | 0x0000001818000000ULL, 20}, // a8-h8
+        {0x0000000080402010ULL | 0x0000001818000000ULL, 18}, // a5-d8
+        {0x0000000000804020ULL | 0x0000001818000000ULL, 18}, // a6-c8
+        {0x0000000020408070ULL | 0x0000001818000000ULL, 20}, // a7-b8, b6-c5, c8-d8
+        {0x0000000080808070ULL | 0x0000001818000000ULL, 20}  // a7-b8, a5-a6, c8-d8
+        */
     };
-    for (uint64_t condition: conditions){
-        for (uint32_t i = 0; i < HW2; ++i){
-            std::cerr << (1 & (condition >> (HW2_M1 - i)));
-            if (i % HW == HW_M1)
-                std::cerr << std::endl;
+    uint64_t strt = tim();
+    for (int depth = 4; depth <= 20; depth += 2){
+        std::cout << "depth " << depth << " start" << std::endl;
+        std::cerr << "depth " << depth << " start" << std::endl;
+        uint64_t sum_n_silhouettes = 0, sum_n_boards = 0, sum_n_solutions = 0;
+        std::unordered_set<uint64_t> seen_unique_discs;
+        for (Task task: tasks){
+            std::cout << "max memo depth " << task.max_memo_depth << std::endl;
+            for (uint32_t i = 0; i < HW2; ++i){
+                std::cout << (1 & (task.first_silhouette >> (HW2_M1 - i)));
+                if (i % HW == HW_M1)
+                    std::cout << std::endl;
+            }
+            std::cout << std::endl;
+            uint64_t n_silhouettes = 0, n_boards = 0, n_solutions = 0;
+            if (depth + 4 - pop_count_ull(task.first_silhouette) >= 0){
+                generate_silhouettes(task.first_silhouette, depth + 4 - pop_count_ull(task.first_silhouette), 0, &n_silhouettes, &n_boards, &n_solutions, seen_unique_discs, false, task.max_memo_depth);
+            }
+            sum_n_silhouettes += n_silhouettes;
+            sum_n_boards += n_boards;
+            sum_n_solutions += n_solutions;
         }
-        std::cerr << std::endl;
-        for (uint32_t i = 0; i < HW2; ++i){
-            std::cout << (1 & (condition >> (HW2_M1 - i)));
-            if (i % HW == HW_M1)
-                std::cout << std::endl;
-        }
-        std::cout << std::endl;
+        std::cout << "depth " << depth << " n_silhouettes " << sum_n_silhouettes << " n_boards " << sum_n_boards << " n_solutions " << sum_n_solutions << " time " << tim() - strt << " ms" << std::endl;
+        std::cerr << "depth " << depth << " n_silhouettes " << sum_n_silhouettes << " n_boards " << sum_n_boards << " n_solutions " << sum_n_solutions << " time " << tim() - strt << " ms" << std::endl;
     }
     
-    for (int depth = 4; depth <= 20; depth += 2){
-        uint64_t strt = tim();
-        uint64_t n_silhouettes = 0, n_boards = 0, n_solutions = 0;
-        std::unordered_set<uint64_t> seen_unique_discs;
-        for (uint64_t condition: conditions){
-            uint64_t discs = condition | 0x0000001818000000ULL;
-            uint64_t seen_cells = 0;
-            if (depth + 4 - pop_count_ull(discs) >= 0){
-                generate_silhouettes(discs, depth + 4 - pop_count_ull(discs), seen_cells, &n_silhouettes, &n_boards, &n_solutions, seen_unique_discs, check_all_connected(discs));
-            }
-        }
-        std::cout << "depth " << depth << " n_silhouettes " << n_silhouettes << " n_boards " << n_boards << " n_solutions " << n_solutions << " time " << tim() - strt << " ms" << std::endl;
-        std::cerr << "depth " << depth << " n_silhouettes " << n_silhouettes << " n_boards " << n_boards << " n_solutions " << n_solutions << " time " << tim() - strt << " ms" << std::endl;
-    }
     return 0;
 }
