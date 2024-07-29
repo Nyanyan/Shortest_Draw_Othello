@@ -13,6 +13,8 @@
 #include "engine/board.hpp"
 #include "engine/util.hpp"
 
+#define MAX_DUPLICATION_CHECK_DEPTH 16
+
 void init(){
     bit_init();
     mobility_init();
@@ -346,12 +348,18 @@ bool check_all_connected(uint64_t discs){
 }
 
 // generate silhouettes
-void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions, std::unordered_set<uint64_t> &seen_unique_discs, bool connected, int max_memo_depth){
+void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions, std::unordered_set<uint64_t> &seen_unique_discs, std::unordered_set<uint64_t> &task_duplication_discs, bool connected, int max_memo_depth){
     //if (check_full_lines(discs)){ // full lines already seen
     //    return;
     //}
     uint64_t unique_discs = get_unique_discs(discs);
-    if (pop_count_ull(discs) <= 4 + max_memo_depth){
+    int n_discs = pop_count_ull(discs);
+    if (n_discs <= 4 + MAX_DUPLICATION_CHECK_DEPTH){
+        if (task_duplication_discs.find(unique_discs) != task_duplication_discs.end()){
+            return;
+        }
+        task_duplication_discs.emplace(unique_discs);
+    } else if (n_discs <= 4 + max_memo_depth){
         if (seen_unique_discs.find(unique_discs) != seen_unique_discs.end()){
             return;
         }
@@ -399,7 +407,7 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
             uint64_t cell_bit = 1ULL << cell;
             seen_cells ^= cell_bit;
             discs ^= cell_bit;
-                generate_silhouettes(discs, depth - 1, seen_cells, n_silhouettes, n_boards, n_solutions, seen_unique_discs, connected, max_memo_depth);
+                generate_silhouettes(discs, depth - 1, seen_cells, n_silhouettes, n_boards, n_solutions, seen_unique_discs, task_duplication_discs, connected, max_memo_depth);
             discs ^= cell_bit;
         }
     }
@@ -439,22 +447,25 @@ int main(int argc, char* argv[]){
         std::cout << std::endl;
     }
     uint64_t strt = tim();
+    std::vector<std::unordered_set<uint64_t>> duplications(tasks.size());
     for (int depth = 2; depth <= 20; depth += 2){
         std::cout << "depth " << depth << " start" << std::endl;
         std::cerr << "depth " << depth << " start" << std::endl;
         uint64_t sum_n_silhouettes = 0, sum_n_boards = 0, sum_n_solutions = 0;
         int task_idx = 0;
+        std::unordered_set<uint64_t> task_duplication_discs;
         for (Task task: tasks){
             std::unordered_set<uint64_t> seen_unique_discs;
             std::cerr << "\rtask " << task_idx << "/" << tasks.size();
             std::cout << "task " << task_idx << "/" << tasks.size() << std::endl;
             uint64_t n_silhouettes = 0, n_boards = 0, n_solutions = 0;
             if (depth + 4 - pop_count_ull(task.first_silhouette) >= 0){
-                generate_silhouettes(task.first_silhouette, depth + 4 - pop_count_ull(task.first_silhouette), 0, &n_silhouettes, &n_boards, &n_solutions, seen_unique_discs, false, task.max_memo_depth);
+                generate_silhouettes(task.first_silhouette, depth + 4 - pop_count_ull(task.first_silhouette), 0, &n_silhouettes, &n_boards, &n_solutions, seen_unique_discs, task_duplication_discs, false, task.max_memo_depth);
             }
             sum_n_silhouettes += n_silhouettes;
             sum_n_boards += n_boards;
             sum_n_solutions += n_solutions;
+            
             ++task_idx;
         }
         std::cerr << std::endl;
