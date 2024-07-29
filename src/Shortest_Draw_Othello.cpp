@@ -10,10 +10,16 @@
 
 #include <iostream>
 #include <unordered_set>
+#include <future>
+#include <atomic>
+#include <chrono>
+#include <mutex>
 #include "engine/board.hpp"
 #include "engine/util.hpp"
 
-#define MAX_DUPLICATION_CHECK_DEPTH 16
+#define MAX_DUPLICATION_CHECK_DEPTH 12
+
+#define MAX_N_PARALLEL 32
 
 void init(){
     bit_init();
@@ -21,7 +27,9 @@ void init(){
     flip_init();
 }
 
+std::mutex print_mtx;
 void output_transcript(std::vector<int> &transcript){
+    std::lock_guard<std::mutex> lock(print_mtx);
     for (int &move: transcript){
         std::cout << idx_to_coord(move);
     }
@@ -92,11 +100,11 @@ inline uint64_t enhanced_stability(Board *board, const uint64_t goal_mask){
     return stability;
 }
 
-void find_path_p(Board *board, std::vector<int> &path, int player, const uint64_t goal_mask, const uint64_t corner_mask, const int goal_n_discs, const Board *goal, const int goal_player, uint64_t *n_nodes, uint64_t *n_solutions){
+void find_path_p(Board *board, std::vector<int> &path, int player, const uint64_t goal_mask, const uint64_t corner_mask, const int goal_n_discs, const Board *goal, const int goal_player, uint64_t *n_nodes, std::atomic<uint64_t> *n_solutions){
     ++(*n_nodes);
     if (player == goal_player && board->player == goal->player && board->opponent == goal->opponent){
         output_transcript(path);
-        ++(*n_solutions);
+        n_solutions->fetch_add(1);
         return;
     }
     uint64_t goal_board_player, goal_board_opponent;
@@ -125,7 +133,7 @@ void find_path_p(Board *board, std::vector<int> &path, int player, const uint64_
 }
 
 // find path to the given board
-void find_path(Board *goal, uint64_t *n_solutions){
+void find_path(Board *goal, std::atomic<uint64_t> *n_solutions){
     uint64_t goal_mask = goal->player | goal->opponent; // legal candidate
     uint64_t corner_mask = 0ULL; // cells that work as corner (non-flippable cells)
     uint64_t empty_mask_r1 = ((~goal_mask & 0xFEFEFEFEFEFEFEFEULL) >> 1) | 0x8080808080808080ULL;
@@ -164,6 +172,10 @@ void find_path(Board *goal, uint64_t *n_solutions){
     uint64_t n_nodes = 0;
     find_path_p(&board, path, BLACK, goal_mask, corner_mask, n_discs, goal, BLACK, &n_nodes, n_solutions);
     find_path_p(&board, path, BLACK, goal_mask, corner_mask, n_discs, goal, WHITE, &n_nodes, n_solutions);
+    Board goal_mirror = goal->copy();
+    goal_mirror.board_vertical_mirror();
+    find_path_p(&board, path, BLACK, goal_mask, corner_mask, n_discs, &goal_mirror, BLACK, &n_nodes, n_solutions);
+    find_path_p(&board, path, BLACK, goal_mask, corner_mask, n_discs, &goal_mirror, WHITE, &n_nodes, n_solutions);
     uint64_t elapsed = tim() - strt;
     //std::cout << "found " << n_solutions << " solutions in " << elapsed << " ms " << n_nodes << " nodes" << std::endl;
     //std::cerr << "found " << n_solutions << " solutions in " << elapsed << " ms " << n_nodes << " nodes" << std::endl;
@@ -250,10 +262,10 @@ constexpr uint64_t bit_neighbour[HW2] = {
 
 
 // generate draw endgame
-void generate_boards(Board *board, uint64_t any_color_discs, uint64_t fixed_color_discs, int n_discs_half, uint64_t *n_boards, uint64_t *n_solutions){
+void generate_boards(Board *board, uint64_t any_color_discs, uint64_t fixed_color_discs, int n_discs_half, std::atomic<uint64_t> *n_boards, std::atomic<uint64_t> *n_solutions){
     if (any_color_discs == 0 && fixed_color_discs == 0){
         if (board->is_end()){ // game over
-            ++(*n_boards);
+            n_boards->fetch_add(1);
             find_path(board, n_solutions);
         }
         return;
@@ -348,29 +360,23 @@ bool check_all_connected(uint64_t discs){
 }
 
 // generate silhouettes
-void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions, std::unordered_set<uint64_t> &seen_unique_discs, std::unordered_set<uint64_t> &task_duplication_discs, bool connected, int max_memo_depth){
-    //if (check_full_lines(discs)){ // full lines already seen
-    //    return;
-    //}
+void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, std::atomic<uint64_t> *n_silhouettes, std::atomic<uint64_t> *n_boards, std::atomic<uint64_t> *n_solutions, std::unordered_set<uint64_t> &task_duplication_discs, bool connected, bool check_duplication){
     uint64_t unique_discs = get_unique_discs(discs);
-    int n_discs = pop_count_ull(discs);
-    if (n_discs <= 4 + MAX_DUPLICATION_CHECK_DEPTH){
-        if (task_duplication_discs.find(unique_discs) != task_duplication_discs.end()){
-            return;
+    if (check_duplication){
+        int n_discs = pop_count_ull(discs);
+        if (n_discs <= 4 + MAX_DUPLICATION_CHECK_DEPTH){
+            if (task_duplication_discs.find(unique_discs) != task_duplication_discs.end()){
+                return;
+            }
+            task_duplication_discs.emplace(unique_discs);
         }
-        task_duplication_discs.emplace(unique_discs);
-    } else if (n_discs <= 4 + max_memo_depth){
-        if (seen_unique_discs.find(unique_discs) != seen_unique_discs.end()){
-            return;
-        }
-        seen_unique_discs.emplace(unique_discs);
     }
     if (!connected){
         connected = check_all_connected(discs);
     }
     if (depth == 0){
         if (connected){
-            ++(*n_silhouettes);
+            n_silhouettes->fetch_add(1);
             uint64_t any_color_discs = 0;
             uint64_t discs_copy = discs;
             for (uint_fast8_t cell = first_bit(&discs_copy); discs_copy; cell = next_bit(&discs_copy)){
@@ -407,14 +413,14 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
             uint64_t cell_bit = 1ULL << cell;
             seen_cells ^= cell_bit;
             discs ^= cell_bit;
-                generate_silhouettes(discs, depth - 1, seen_cells, n_silhouettes, n_boards, n_solutions, seen_unique_discs, task_duplication_discs, connected, max_memo_depth);
+                generate_silhouettes(discs, depth - 1, seen_cells, n_silhouettes, n_boards, n_solutions, task_duplication_discs, connected, check_duplication);
             discs ^= cell_bit;
         }
     }
 }
 
 struct Task{
-    uint64_t first_silhouette;
+    uint64_t initial_silhouette;
     int max_memo_depth;
 };
 
@@ -440,37 +446,98 @@ int main(int argc, char* argv[]){
     for (Task task: tasks){
         std::cout << "max memo depth " << task.max_memo_depth << std::endl;
         for (uint32_t i = 0; i < HW2; ++i){
-            std::cout << (1 & (task.first_silhouette >> (HW2_M1 - i)));
+            std::cout << (1 & (task.initial_silhouette >> (HW2_M1 - i)));
             if (i % HW == HW_M1)
                 std::cout << std::endl;
         }
         std::cout << std::endl;
     }
     uint64_t strt = tim();
-    std::vector<std::unordered_set<uint64_t>> duplications(tasks.size());
-    for (int depth = 2; depth <= 20; depth += 2){
+    std::unordered_set<uint64_t> task_duplication_discs;
+    for (int depth = 2; depth <= MAX_DUPLICATION_CHECK_DEPTH; depth += 2){
         std::cout << "depth " << depth << " start" << std::endl;
         std::cerr << "depth " << depth << " start" << std::endl;
-        uint64_t sum_n_silhouettes = 0, sum_n_boards = 0, sum_n_solutions = 0;
+        task_duplication_discs.clear();
+        std::atomic<uint64_t> n_silhouettes = 0, n_boards = 0, n_solutions = 0;
         int task_idx = 0;
-        std::unordered_set<uint64_t> task_duplication_discs;
         for (Task task: tasks){
-            std::unordered_set<uint64_t> seen_unique_discs;
             std::cerr << "\rtask " << task_idx << "/" << tasks.size();
-            std::cout << "task " << task_idx << "/" << tasks.size() << std::endl;
-            uint64_t n_silhouettes = 0, n_boards = 0, n_solutions = 0;
-            if (depth + 4 - pop_count_ull(task.first_silhouette) >= 0){
-                generate_silhouettes(task.first_silhouette, depth + 4 - pop_count_ull(task.first_silhouette), 0, &n_silhouettes, &n_boards, &n_solutions, seen_unique_discs, task_duplication_discs, false, task.max_memo_depth);
+            if (depth + 4 - pop_count_ull(task.initial_silhouette) >= 0){
+                generate_silhouettes(task.initial_silhouette, depth + 4 - pop_count_ull(task.initial_silhouette), 0, &n_silhouettes, &n_boards, &n_solutions, task_duplication_discs, false, true);
             }
-            sum_n_silhouettes += n_silhouettes;
-            sum_n_boards += n_boards;
-            sum_n_solutions += n_solutions;
-            
             ++task_idx;
         }
         std::cerr << std::endl;
-        std::cout << "depth " << depth << " n_silhouettes " << sum_n_silhouettes << " n_boards " << sum_n_boards << " n_solutions " << sum_n_solutions << " time " << tim() - strt << " ms" << std::endl;
-        std::cerr << "depth " << depth << " n_silhouettes " << sum_n_silhouettes << " n_boards " << sum_n_boards << " n_solutions " << sum_n_solutions << " time " << tim() - strt << " ms" << std::endl;
+        std::cout << "depth " << depth << " n_silhouettes " << n_silhouettes << " n_boards " << n_boards << " n_solutions " << n_solutions << " time " << tim() - strt << " ms" << std::endl;
+        std::cerr << "depth " << depth << " n_silhouettes " << n_silhouettes << " n_boards " << n_boards << " n_solutions " << n_solutions << " time " << tim() - strt << " ms" << std::endl;
+    }
+    std::unordered_set<uint64_t> dummy;
+    int n_parallel = 0;
+    for (int depth = MAX_DUPLICATION_CHECK_DEPTH + 2; depth <= 20; depth += 2){
+        std::vector<uint64_t> deep_tasks;
+        int task_depth = std::min(MAX_DUPLICATION_CHECK_DEPTH, depth - 10);
+        for (uint64_t discs: task_duplication_discs){
+            if (pop_count_ull(discs) == 4 + task_depth){
+                deep_tasks.emplace_back(discs);
+            }
+        }
+        for (Task task: tasks){
+            if (pop_count_ull(task.initial_silhouette) > 4 + task_depth){
+                deep_tasks.emplace_back(task.initial_silhouette);
+            }
+        }
+        std::cout << "depth " << depth << " start task_depth: " << task_depth << " size: " << deep_tasks.size() << std::endl;;
+        std::cerr << "depth " << depth << " start task_depth: " << task_depth << " size: " << deep_tasks.size() << std::endl;;
+        std::vector<std::future<void>> tasks;
+        std::atomic<uint64_t> n_silhouettes = 0, n_boards = 0, n_solutions = 0;
+        uint64_t n_done_tasks = 0;
+        int percent = -1;
+        uint64_t depth_strt = tim();
+        for (uint64_t discs: deep_tasks){
+            while (n_parallel >= MAX_N_PARALLEL){
+                for (std::future<void> &task: tasks){
+                    if (task.valid()){
+                        if (task.wait_for(std::chrono::seconds(0)) == std::future_status::ready){
+                            task.get();
+                            --n_parallel;
+                            ++n_done_tasks;
+                        }
+                    }
+                }
+            }
+            double n_percent = 100.0 * n_done_tasks / deep_tasks.size();
+            if (round(n_percent) > percent){
+                percent = round(n_percent);
+                double minutes_passed = (double)(tim() - depth_strt) / 1000 / 60;
+                int eta = -1;
+                if (n_percent >= 0.5){
+                    eta = round(minutes_passed / n_percent * (100.0 - n_percent));
+                }
+                std::cerr << "\r" << percent << "%" << " " << round(minutes_passed) << " minutes passed ETA: " << eta << " minutes   ";
+            }
+            tasks.emplace_back(std::async(std::launch::async, std::bind(generate_silhouettes, discs, depth + 4 - pop_count_ull(discs), 0, &n_silhouettes, &n_boards, &n_solutions, dummy, false, false)));
+            ++n_parallel;
+        }
+        for (std::future<void> &task: tasks){
+            if (task.valid()){
+                task.get();
+                --n_parallel;
+                ++n_done_tasks;
+                double n_percent = 100.0 * n_done_tasks / deep_tasks.size();
+                if (round(n_percent) > percent){
+                    percent = round(n_percent);
+                    double minutes_passed = (double)(tim() - depth_strt) / 1000 / 60;
+                    int eta = -1;
+                    if (n_percent >= 0.5){
+                        eta = round(minutes_passed / n_percent * (100.0 - n_percent));
+                    }
+                    std::cerr << "\r" << percent << "%" << " " << round(minutes_passed) << " minutes passed ETA: " << eta << " minutes   ";
+                }
+            }
+        }
+        std::cerr << std::endl;
+        std::cout << "depth " << depth << " n_silhouettes " << n_silhouettes << " n_boards " << n_boards << " n_solutions " << n_solutions << " time " << tim() - strt << " ms" << std::endl;
+        std::cerr << "depth " << depth << " n_silhouettes " << n_silhouettes << " n_boards " << n_boards << " n_solutions " << n_solutions << " time " << tim() - strt << " ms" << std::endl;
     }
     
     return 0;
