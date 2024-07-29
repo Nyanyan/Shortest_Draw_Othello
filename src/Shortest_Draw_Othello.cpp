@@ -442,6 +442,7 @@ int main(int argc, char* argv[]){
                     std::cout << std::endl;
             }
             std::cout << std::endl;
+            std::cerr << "=";
             uint64_t n_silhouettes = 0, n_boards = 0, n_solutions = 0;
             if (depth + 4 - pop_count_ull(task.first_silhouette) >= 0){
                 generate_silhouettes(task.first_silhouette, depth + 4 - pop_count_ull(task.first_silhouette), 0, &n_silhouettes, &n_boards, &n_solutions, seen_unique_discs, false, task.max_memo_depth);
@@ -450,6 +451,7 @@ int main(int argc, char* argv[]){
             sum_n_boards += n_boards;
             sum_n_solutions += n_solutions;
         }
+        std::cerr << std::endl;
         std::cout << "depth " << depth << " n_silhouettes " << sum_n_silhouettes << " n_boards " << sum_n_boards << " n_solutions " << sum_n_solutions << " time " << tim() - strt << " ms" << std::endl;
         std::cerr << "depth " << depth << " n_silhouettes " << sum_n_silhouettes << " n_boards " << sum_n_boards << " n_solutions " << sum_n_solutions << " time " << tim() - strt << " ms" << std::endl;
     }
