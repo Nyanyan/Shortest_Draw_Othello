@@ -428,21 +428,26 @@ int main(int argc, char* argv[]){
         {0x0000000020408070ULL | 0x0000001818000000ULL, 20}, // a7-b8, b6-c5, c8-d8
         {0x0000000080808070ULL | 0x0000001818000000ULL, 20}  // a7-b8, a5-a6, c8-d8
     };
+    std::cout << "task list:" << std::endl;
+    for (Task task: tasks){
+        std::cout << "max memo depth " << task.max_memo_depth << std::endl;
+        for (uint32_t i = 0; i < HW2; ++i){
+            std::cout << (1 & (task.first_silhouette >> (HW2_M1 - i)));
+            if (i % HW == HW_M1)
+                std::cout << std::endl;
+        }
+        std::cout << std::endl;
+    }
     uint64_t strt = tim();
-    for (int depth = 4; depth <= 20; depth += 2){
+    for (int depth = 2; depth <= 20; depth += 2){
         std::cout << "depth " << depth << " start" << std::endl;
         std::cerr << "depth " << depth << " start" << std::endl;
         uint64_t sum_n_silhouettes = 0, sum_n_boards = 0, sum_n_solutions = 0;
-        std::unordered_set<uint64_t> seen_unique_discs;
+        int task_idx = 0;
         for (Task task: tasks){
-            std::cout << "max memo depth " << task.max_memo_depth << std::endl;
-            for (uint32_t i = 0; i < HW2; ++i){
-                std::cout << (1 & (task.first_silhouette >> (HW2_M1 - i)));
-                if (i % HW == HW_M1)
-                    std::cout << std::endl;
-            }
-            std::cout << std::endl;
-            std::cerr << "=";
+            std::unordered_set<uint64_t> seen_unique_discs;
+            std::cerr << "\rtask " << task_idx << "/" << tasks.size();
+            std::cout << "task " << task_idx << "/" << tasks.size() << std::endl;
             uint64_t n_silhouettes = 0, n_boards = 0, n_solutions = 0;
             if (depth + 4 - pop_count_ull(task.first_silhouette) >= 0){
                 generate_silhouettes(task.first_silhouette, depth + 4 - pop_count_ull(task.first_silhouette), 0, &n_silhouettes, &n_boards, &n_solutions, seen_unique_discs, false, task.max_memo_depth);
@@ -450,6 +455,7 @@ int main(int argc, char* argv[]){
             sum_n_silhouettes += n_silhouettes;
             sum_n_boards += n_boards;
             sum_n_solutions += n_solutions;
+            ++task_idx;
         }
         std::cerr << std::endl;
         std::cout << "depth " << depth << " n_silhouettes " << sum_n_silhouettes << " n_boards " << sum_n_boards << " n_solutions " << sum_n_solutions << " time " << tim() - strt << " ms" << std::endl;
