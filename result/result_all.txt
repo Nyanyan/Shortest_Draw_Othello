@@ -1,0 +1,269 @@
+task list:
+max memo depth 20
+10000000
+01000000
+00100000
+00011000
+00011000
+00000100
+00000010
+00000001
+
+max memo depth 20
+00000000
+00000000
+00000000
+00011000
+00011000
+11111111
+00000000
+00000000
+
+max memo depth 20
+00000000
+00000000
+00000000
+00011000
+11111111
+00000000
+00000000
+00000000
+
+max memo depth 20
+00000000
+10000000
+01000000
+00111000
+00011000
+00001000
+00000100
+00000010
+
+max memo depth 20
+00000000
+00000000
+10000000
+01011000
+00111000
+00010000
+00001000
+00000100
+
+max memo depth 20
+00000000
+00000000
+00000000
+10011000
+01011000
+00100000
+00010000
+00001000
+
+max memo depth 20
+00000000
+00000000
+00000000
+00011000
+00011000
+00000000
+11111111
+00000000
+
+max memo depth 20
+00000000
+00000000
+00000000
+00011000
+00011000
+00000000
+00000000
+11111111
+
+max memo depth 18
+00000000
+00000000
+00000000
+00011000
+10011000
+01000000
+00100000
+00010000
+
+max memo depth 18
+00000000
+00000000
+00000000
+00011000
+00011000
+10000000
+01000000
+00100000
+
+max memo depth 20
+00000000
+00000000
+00000000
+00011000
+00111000
+01000000
+10000000
+01110000
+
+max memo depth 20
+00000000
+00000000
+00000000
+00011000
+10011000
+10000000
+10000000
+01110000
+
+depth 2 start
+task 0/12
+task 1/12
+task 2/12
+task 3/12
+task 4/12
+task 5/12
+task 6/12
+task 7/12
+task 8/12
+task 9/12
+task 10/12
+task 11/12
+depth 2 n_silhouettes 0 n_boards 0 n_solutions 0 time 1 ms
+depth 4 start
+task 0/12
+task 1/12
+task 2/12
+task 3/12
+task 4/12
+task 5/12
+task 6/12
+task 7/12
+task 8/12
+task 9/12
+task 10/12
+task 11/12
+depth 4 n_silhouettes 1 n_boards 0 n_solutions 0 time 2 ms
+depth 6 start
+task 0/12
+task 1/12
+task 2/12
+task 3/12
+task 4/12
+task 5/12
+task 6/12
+task 7/12
+task 8/12
+task 9/12
+task 10/12
+task 11/12
+depth 6 n_silhouettes 105 n_boards 6 n_solutions 0 time 3 ms
+depth 8 start
+task 0/12
+task 1/12
+task 2/12
+task 3/12
+task 4/12
+task 5/12
+task 6/12
+task 7/12
+task 8/12
+task 9/12
+task 10/12
+task 11/12
+depth 8 n_silhouettes 3971 n_boards 38 n_solutions 0 time 6 ms
+depth 10 start
+task 0/12
+task 1/12
+task 2/12
+task 3/12
+task 4/12
+task 5/12
+task 6/12
+task 7/12
+task 8/12
+task 9/12
+task 10/12
+task 11/12
+depth 10 n_silhouettes 92666 n_boards 343 n_solutions 0 time 39 ms
+depth 12 start
+task 0/12
+task 1/12
+task 2/12
+task 3/12
+task 4/12
+task 5/12
+task 6/12
+task 7/12
+task 8/12
+task 9/12
+task 10/12
+task 11/12
+depth 12 n_silhouettes 1560899 n_boards 3061 n_solutions 0 time 1087 ms
+depth 14 start
+task 0/12
+task 1/12
+task 2/12
+task 3/12
+task 4/12
+task 5/12
+task 6/12
+task 7/12
+task 8/12
+task 9/12
+task 10/12
+task 11/12
+depth 14 n_silhouettes 20368858 n_boards 29339 n_solutions 0 time 21257 ms
+depth 16 start
+task 0/12
+task 1/12
+task 2/12
+task 3/12
+task 4/12
+task 5/12
+task 6/12
+task 7/12
+task 8/12
+task 9/12
+task 10/12
+task 11/12
+depth 16 n_silhouettes 214038538 n_boards 248067 n_solutions 0 time 308510 ms
+depth 18 start
+task 0/12
+task 1/12
+task 2/12
+task 3/12
+task 4/12
+task 5/12
+task 6/12
+task 7/12
+task 8/12
+task 9/12
+task 10/12
+task 11/12
+depth 18 n_silhouettes 1886661717 n_boards 1614275 n_solutions 0 time 4692785 ms
+depth 20 start
+task 0/12
+e6d6c3f6g7g6c6g8h6b2f8g5h8c7g4c5b6a6a1e3
+e6d6c3f6g7g6c6g8h6b2f8g5h8c5g4c7b6a6a1e3
+e6d6c3f6g7g6c6g8h6b2f8g5h8c5g4b7b6a6a1e3
+e6d6c3f6g7g6c6g8h6b2f8c5a1g5b6a6h8b5g4e3
+task 1/12
+e6d6c3f6g7g6c6g8h6b2f8g5h8c7g4c5b6a6a1e3
+e6d6c3f6g7g6c6g8h6b2f8g5h8c5g4c7b6a6a1e3
+e6d6c3f6g7g6c6g8h6b2f8g5h8c5g4b7b6a6a1e3
+e6d6c3f6g7g6c6g8h6b2f8c5a1g5b6a6h8b5g4e3
+task 2/12
+task 3/12
+task 4/12
+task 5/12
+task 6/12
+task 7/12
+task 8/12
+task 9/12
+task 10/12
+task 11/12
+depth 20 n_silhouettes 14946317845 n_boards 9742799 n_solutions 8 time 51763111 ms
