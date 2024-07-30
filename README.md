@@ -1,6 +1,8 @@
 # Shortest_Draw_Othello
 Find the shortest Draw in Othello
 
+Article in Japanese: https://qiita.com/Nyanyan_Cube/items/ccab30af5c6a2b9d1e06
+
 
 
 ## Result
