@@ -558,6 +558,12 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
     if (white_line_mirror(discs) == discs){
         puttable ^= white_line_mirror(puttable) & puttable & 0xFF7F3F1F0F070301ULL;
     }
+    if (rotate_180(discs) == discs){
+        puttable ^= rotate_180(puttable) & puttable & 0xFFFFFFFF00000000ULL;
+    }
+    if (horizontal_mirror(discs) == discs){
+        puttable ^= horizontal_mirror(puttable) & puttable & 0x0F0F0F0F0F0F0F0FULL;
+    }
     if (puttable){
         for (uint_fast8_t cell = first_bit(&puttable); puttable; cell = next_bit(&puttable)){
             uint64_t cell_bit = 1ULL << cell;
@@ -580,12 +586,9 @@ int main(int argc, char* argv[]){
     // need 1 or more full line to cause gameover by draw  (because there are both black and white discs)
     const std::vector<Task> tasks = {
         {0x8040201008040201ULL | 0x0000001818000000ULL, 20}, // a1-h8
-        /*
         {0x0000000000FF0000ULL | 0x0000001818000000ULL, 20}, // a6-h6
         {0x00000000FF000000ULL | 0x0000001818000000ULL, 20}, // a5-h5
-        
         {0x0080402010080402ULL | 0x0000001818000000ULL, 20}, // a2-g8
-        
         {0x0000804020100804ULL | 0x0000001818000000ULL, 20}, // a3-f8
         {0x0000008040201008ULL | 0x0000001818000000ULL, 20}, // a4-e8
         {0x000000000000FF00ULL | 0x0000001818000000ULL, 20}, // a7-h7
@@ -594,7 +597,6 @@ int main(int argc, char* argv[]){
         {0x0000000000804020ULL | 0x0000001818000000ULL, 18}, // a6-c8
         {0x0000000020408070ULL | 0x0000001818000000ULL, 20}, // a7-b8, b6-c5, c8-d8
         {0x0000000080808070ULL | 0x0000001818000000ULL, 20}  // a7-b8, a5-a6, c8-d8
-        */
     };
     std::cout << "task list:" << std::endl;
     for (Task task: tasks){
