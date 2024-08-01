@@ -254,8 +254,9 @@ constexpr uint64_t bit_neighbour[HW2] = {
 
 
 // generate draw endgame
-void generate_boards(Board *board, uint64_t any_color_discs, uint64_t fixed_color_discs, int n_discs_half, uint64_t *n_boards, uint64_t *n_solutions){
-    if (any_color_discs == 0 && fixed_color_discs == 0){
+void generate_boards(Board *board, uint64_t discs, int n_discs_half, uint64_t *n_boards, uint64_t *n_solutions){
+    uint64_t board_discs = board->player | board->opponent;
+    if (board_discs == discs){
         if (board->is_end()){ // game over
             ++(*n_boards);
             find_path(board, n_solutions);
@@ -264,46 +265,42 @@ void generate_boards(Board *board, uint64_t any_color_discs, uint64_t fixed_colo
     }
     int n_player = pop_count_ull(board->player);
     int n_opponent = pop_count_ull(board->opponent);
-    if (any_color_discs){
-        uint_fast8_t cell = ctz(any_color_discs);
-        uint64_t cell_bit = 1ULL << cell;
-        any_color_discs ^= cell_bit;
-        if (n_player < n_discs_half){
-            board->player ^= cell_bit;
-                generate_boards(board, any_color_discs, fixed_color_discs, n_discs_half, n_boards, n_solutions);
-            board->player ^= cell_bit;
-        }
-        if (n_opponent < n_discs_half){
-            board->opponent ^= cell_bit;
-                generate_boards(board, any_color_discs, fixed_color_discs, n_discs_half, n_boards, n_solutions);
-            board->opponent ^= cell_bit;
-        }
-    } else{
-        uint64_t tmp_fcd = fixed_color_discs;
-        uint_fast8_t cell = ctz(tmp_fcd);
-        uint64_t cell_bit = 1ULL << cell;
-        while (((board->opponent & bit_neighbour[cell]) == 0 && (board->player & bit_neighbour[cell]) == 0)){
-            tmp_fcd ^= cell_bit;
-            cell = ctz(tmp_fcd);
-            cell_bit = 1ULL << cell;
-        }
-        fixed_color_discs ^= cell_bit;
-        if ((board->player & bit_neighbour[cell]) && (board->opponent & bit_neighbour[cell]) == 0 && n_player < n_discs_half){
-            board->player ^= cell_bit;
-                generate_boards(board, any_color_discs, fixed_color_discs, n_discs_half, n_boards, n_solutions);
-            board->player ^= cell_bit;
-        } else if ((board->opponent & bit_neighbour[cell]) && (board->player & bit_neighbour[cell]) == 0 && n_opponent < n_discs_half){
-            board->opponent ^= cell_bit;
-                generate_boards(board, any_color_discs, fixed_color_discs, n_discs_half, n_boards, n_solutions);
-            board->opponent ^= cell_bit;
-        } else if ((board->opponent & bit_neighbour[cell]) == 0 && (board->player & bit_neighbour[cell]) == 0){
-            std::cerr << "ERR" << std::endl;
-            bit_print_board(cell_bit);
-            bit_print_board(fixed_color_discs);
-            board->print();
-            exit(0);
+    if (n_player > n_discs_half || n_opponent > n_discs_half){
+        return;
+    }
+    uint64_t group = 1ULL << ctz(~board_discs & discs);
+    uint64_t f_group = 0;
+    while (group != f_group){
+        f_group = group;
+        for (int cell = 0; cell < HW2; ++cell){
+            if (1 & (group >> cell)){
+                for (int i = 0; i < 4; ++i){
+                    if ((discs & bit_line[cell][i]) != bit_line[cell][i]){
+                        int shift = 0;
+                        if (i == 0){ // horizontal
+                            shift = 1;
+                        } else if (i == 1){ // vertical
+                            shift = 8;
+                        } else if (i == 2){ // diagonal 7
+                            shift = 7;
+                        } else{ // diagonal 9
+                            shift = 9;
+                        }
+                        for (int j = 1; j < 8; ++j){
+                            group |= (1ULL << cell) << (shift * j);
+                            group |= (1ULL << cell) >> (shift * j);
+                        }
+                    }
+                }
+            }
         }
     }
+    board->player ^= group;
+        generate_boards(board, discs, n_discs_half, n_boards, n_solutions);
+    board->player ^= group;
+    board->opponent ^= group;
+        generate_boards(board, discs, n_discs_half, n_boards, n_solutions);
+    board->opponent ^= group;
 }
 
 uint64_t get_neighbour_discs(uint64_t discs){
@@ -397,6 +394,10 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
                 generate_boards(&board, any_color_discs, fixed_color_discs, pop_count_ull(discs) / 2, n_boards, n_solutions);
             }
             */
+            Board board;
+            board.player = 0;
+            board.opponent = 0;
+            generate_boards(&board, discs, pop_count_ull(discs) / 2, n_boards, n_solutions);
         }
         return;
     }
