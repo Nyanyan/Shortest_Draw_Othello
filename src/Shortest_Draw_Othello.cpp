@@ -440,32 +440,33 @@ std::vector<uint64_t> div_groups(uint64_t discs, uint64_t done_discs){
     while (discs != done_discs){
         uint64_t group = 1ULL << ctz(~done_discs & discs);
         uint64_t f_group = 0;
+        uint64_t checked = 0;
         constexpr int shifts[4] = {1, 8, 7, 9};
         while (group != f_group){
             f_group = group;
-            for (int cell = 0; cell < HW2; ++cell){
-                uint64_t cell_bit = 1ULL << cell;
-                if (group & cell_bit){
-                    for (int i = 0; i < 4; ++i){
-                        if ((discs & bit_line[cell][i]) != bit_line[cell][i]){
-                            int shift = shifts[i];
-                            for (int j = 1; j < 8; ++j){
-                                uint64_t next_cell = cell_bit << (shift * j);
-                                if (next_cell & group & bit_line[cell][i]){
-                                    group |= next_cell;
-                                } else{
-                                    break;
-                                }
-                            }
-                            for (int j = 1; j < 8; ++j){
-                                uint64_t next_cell = cell_bit >> (shift * j);
-                                if (next_cell & group & bit_line[cell][i]){
-                                    group |= next_cell;
-                                } else{
-                                    break;
-                                }
+            uint64_t check_bits = group & ~checked;
+            for (uint_fast8_t cell = first_bit(&check_bits); check_bits; cell = next_bit(&check_bits)){
+                for (int i = 0; i < 4; ++i){
+                    if ((discs & bit_line[cell][i]) != bit_line[cell][i]){ // non full line
+                        int shift = shifts[i];
+                        uint64_t cell_bit = 1ULL << cell;
+                        for (int j = 1; j < 8; ++j){
+                            uint64_t next_cell = cell_bit << (shift * j);
+                            if (next_cell & discs & bit_line[cell][i]){
+                                group |= next_cell;
+                            } else{
+                                break;
                             }
                         }
+                        for (int j = 1; j < 8; ++j){
+                            uint64_t next_cell = cell_bit >> (shift * j);
+                            if (next_cell & discs & bit_line[cell][i]){
+                                group |= next_cell;
+                            } else{
+                                break;
+                            }
+                        }
+                        checked |= cell_bit;
                     }
                 }
             }
@@ -478,6 +479,7 @@ std::vector<uint64_t> div_groups(uint64_t discs, uint64_t done_discs){
 
 // generate silhouettes
 void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions, std::unordered_set<uint64_t> &seen_unique_discs, std::unordered_set<uint64_t> &task_duplication_discs, bool connected, int max_memo_depth){
+    /*
     uint64_t unique_discs = get_unique_discs(discs);
     int n_discs = pop_count_ull(discs);
     if (n_discs <= 4 + MAX_DUPLICATION_CHECK_DEPTH){
@@ -491,15 +493,19 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
         }
         seen_unique_discs.emplace(unique_discs);
     }
+    */
     if (!connected){
         connected = check_all_connected(discs);
     }
     if (depth == 0){
         if (connected){
             ++(*n_silhouettes);
+            
             if (discs == (0x0000021f1c181000ULL | 0x10f840e000000402ULL)){
                 std::cerr << "found" << std::endl;
+                //std::exit(0);
             }
+            
             /*
             uint64_t any_color_discs = 0;
             uint64_t discs_copy = discs;
@@ -573,11 +579,11 @@ int main(int argc, char* argv[]){
 
     // need 1 or more full line to cause gameover by draw  (because there are both black and white discs)
     const std::vector<Task> tasks = {
-        //{0x8040201008040201ULL | 0x0000001818000000ULL, 20}, // a1-h8 (4 solutions found at depth 20)
-        //{0x0000000000FF0000ULL | 0x0000001818000000ULL, 20}, // a6-h6 (4 solutions (same as a1-h8 lines) found at depth 20)
+        {0x8040201008040201ULL | 0x0000001818000000ULL, 20}, // a1-h8
+        //{0x0000000000FF0000ULL | 0x0000001818000000ULL, 20}, // a6-h6
         //{0x00000000FF000000ULL | 0x0000001818000000ULL, 20}, // a5-h5
         
-        {0x0080402010080402ULL | 0x0000001818000000ULL, 20}, // a2-g8
+        //{0x0080402010080402ULL | 0x0000001818000000ULL, 20}, // a2-g8
         
         //{0x0000804020100804ULL | 0x0000001818000000ULL, 20}, // a3-f8
         //{0x0000008040201008ULL | 0x0000001818000000ULL, 20}, // a4-e8
