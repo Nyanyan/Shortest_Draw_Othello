@@ -164,6 +164,10 @@ void find_path(Board *goal, uint64_t *n_solutions){
     uint64_t n_nodes = 0;
     find_path_p(&board, path, BLACK, goal_mask, corner_mask, n_discs, goal, BLACK, &n_nodes, n_solutions);
     find_path_p(&board, path, BLACK, goal_mask, corner_mask, n_discs, goal, WHITE, &n_nodes, n_solutions);
+    Board goal_mirrored = goal->copy();
+    goal_mirrored.board_vertical_mirror();
+    find_path_p(&board, path, BLACK, goal_mask, corner_mask, n_discs, &goal_mirrored, BLACK, &n_nodes, n_solutions);
+    find_path_p(&board, path, BLACK, goal_mask, corner_mask, n_discs, &goal_mirrored, WHITE, &n_nodes, n_solutions);
     uint64_t elapsed = tim() - strt;
     //std::cout << "found " << n_solutions << " solutions in " << elapsed << " ms " << n_nodes << " nodes" << std::endl;
     //std::cerr << "found " << n_solutions << " solutions in " << elapsed << " ms " << n_nodes << " nodes" << std::endl;
@@ -371,6 +375,10 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
     if (depth == 0){
         if (connected){
             ++(*n_silhouettes);
+            if (discs == (0x0000021f1c181000ULL | 0x10f840e000000402ULL)){
+                std::cerr << "found" << std::endl;
+            }
+            /*
             uint64_t any_color_discs = 0;
             uint64_t discs_copy = discs;
             for (uint_fast8_t cell = first_bit(&discs_copy); discs_copy; cell = next_bit(&discs_copy)){
@@ -388,6 +396,7 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
                 any_color_discs &= ~board.player;
                 generate_boards(&board, any_color_discs, fixed_color_discs, pop_count_ull(discs) / 2, n_boards, n_solutions);
             }
+            */
         }
         return;
     }
@@ -423,18 +432,20 @@ int main(int argc, char* argv[]){
 
     // need 1 or more full line to cause gameover by draw  (because there are both black and white discs)
     const std::vector<Task> tasks = {
-        {0x8040201008040201ULL | 0x0000001818000000ULL, 20}, // a1-h8 (4 solutions found at depth 20)
-        {0x0000000000FF0000ULL | 0x0000001818000000ULL, 20}, // a6-h6 (4 solutions (same as a1-h8 lines) found at depth 20)
-        {0x00000000FF000000ULL | 0x0000001818000000ULL, 20}, // a5-h5
+        //{0x8040201008040201ULL | 0x0000001818000000ULL, 20}, // a1-h8 (4 solutions found at depth 20)
+        //{0x0000000000FF0000ULL | 0x0000001818000000ULL, 20}, // a6-h6 (4 solutions (same as a1-h8 lines) found at depth 20)
+        //{0x00000000FF000000ULL | 0x0000001818000000ULL, 20}, // a5-h5
+        
         {0x0080402010080402ULL | 0x0000001818000000ULL, 20}, // a2-g8
-        {0x0000804020100804ULL | 0x0000001818000000ULL, 20}, // a3-f8
-        {0x0000008040201008ULL | 0x0000001818000000ULL, 20}, // a4-e8
-        {0x000000000000FF00ULL | 0x0000001818000000ULL, 20}, // a7-h7
-        {0x00000000000000FFULL | 0x0000001818000000ULL, 20}, // a8-h8
-        {0x0000000080402010ULL | 0x0000001818000000ULL, 18}, // a5-d8
-        {0x0000000000804020ULL | 0x0000001818000000ULL, 18}, // a6-c8
-        {0x0000000020408070ULL | 0x0000001818000000ULL, 20}, // a7-b8, b6-c5, c8-d8
-        {0x0000000080808070ULL | 0x0000001818000000ULL, 20}  // a7-b8, a5-a6, c8-d8
+        
+        //{0x0000804020100804ULL | 0x0000001818000000ULL, 20}, // a3-f8
+        //{0x0000008040201008ULL | 0x0000001818000000ULL, 20}, // a4-e8
+        //{0x000000000000FF00ULL | 0x0000001818000000ULL, 20}, // a7-h7
+        //{0x00000000000000FFULL | 0x0000001818000000ULL, 20}, // a8-h8
+        //{0x0000000080402010ULL | 0x0000001818000000ULL, 18}, // a5-d8
+        //{0x0000000000804020ULL | 0x0000001818000000ULL, 18}, // a6-c8
+        //{0x0000000020408070ULL | 0x0000001818000000ULL, 20}, // a7-b8, b6-c5, c8-d8
+        //{0x0000000080808070ULL | 0x0000001818000000ULL, 20}  // a7-b8, a5-a6, c8-d8
     };
     std::cout << "task list:" << std::endl;
     for (Task task: tasks){
