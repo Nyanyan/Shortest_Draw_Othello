@@ -252,6 +252,7 @@ constexpr uint64_t bit_neighbour[HW2] = {
     0x0203000000000000ULL, 0x0507000000000000ULL, 0x0A0E000000000000ULL, 0x141C000000000000ULL, 0x2838000000000000ULL, 0x5070000000000000ULL, 0xA0E0000000000000ULL, 0x40C0000000000000ULL
 };
 
+/*
 // generate draw endgame
 void generate_boards(Board *board, uint64_t any_color_discs, uint64_t fixed_color_discs, int n_discs_half, uint64_t *n_boards, uint64_t *n_solutions){
     if (any_color_discs == 0 && fixed_color_discs == 0){
@@ -304,6 +305,7 @@ void generate_boards(Board *board, uint64_t any_color_discs, uint64_t fixed_colo
         }
     }
 }
+*/
 
 /*
 
@@ -364,6 +366,30 @@ void generate_boards(Board *board, uint64_t discs, int n_discs_half, uint64_t *n
 }
 */
 
+// generate draw endgame
+void generate_boards(Board *board, std::vector<uint64_t> &groups, int group_idx, int n_discs_half, uint64_t *n_boards, uint64_t *n_solutions){
+    uint64_t board_discs = board->player | board->opponent;
+    if (group_idx > groups.size()){
+        if (board->is_end() && board->score_player() == 0){ // game over with draw
+            ++(*n_boards);
+            find_path(board, n_solutions);
+        }
+        return;
+    }
+    int n_player = pop_count_ull(board->player);
+    int n_opponent = pop_count_ull(board->opponent);
+    if (n_player > n_discs_half || n_opponent > n_discs_half){
+        return;
+    }
+    uint64_t group = groups[group_idx];
+    board->player ^= group;
+        generate_boards(board, groups, group_idx + 1, n_discs_half, n_boards, n_solutions);
+    board->player ^= group;
+    board->opponent ^= group;
+        generate_boards(board, groups, group_idx + 1, n_discs_half, n_boards, n_solutions);
+    board->opponent ^= group;
+}
+
 uint64_t get_neighbour_discs(uint64_t discs){
     uint64_t neighbours = 0;
     neighbours |= ((discs & 0x7F7F7F7F7F7F7F7FULL) << 1);
@@ -409,6 +435,47 @@ bool check_all_connected(uint64_t discs){
     return visited == discs;
 }
 
+std::vector<uint64_t> div_groups(uint64_t discs, uint64_t done_discs){
+    std::vector<uint64_t> res;
+    while (discs != done_discs){
+        uint64_t group = 1ULL << ctz(~done_discs & discs);
+        uint64_t f_group = 0;
+        constexpr int shifts[4] = {1, 8, 7, 9};
+        while (group != f_group){
+            f_group = group;
+            for (int cell = 0; cell < HW2; ++cell){
+                uint64_t cell_bit = 1ULL << cell;
+                if (group & cell_bit){
+                    for (int i = 0; i < 4; ++i){
+                        if ((discs & bit_line[cell][i]) != bit_line[cell][i]){
+                            int shift = shifts[i];
+                            for (int j = 1; j < 8; ++j){
+                                uint64_t next_cell = cell_bit << (shift * j);
+                                if (next_cell & group & bit_line[cell][i]){
+                                    group |= next_cell;
+                                } else{
+                                    break;
+                                }
+                            }
+                            for (int j = 1; j < 8; ++j){
+                                uint64_t next_cell = cell_bit >> (shift * j);
+                                if (next_cell & group & bit_line[cell][i]){
+                                    group |= next_cell;
+                                } else{
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        res.emplace_back(group);
+        done_discs ^= group;
+    }
+    return res;
+}
+
 // generate silhouettes
 void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions, std::unordered_set<uint64_t> &seen_unique_discs, std::unordered_set<uint64_t> &task_duplication_discs, bool connected, int max_memo_depth){
     uint64_t unique_discs = get_unique_discs(discs);
@@ -433,6 +500,7 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
             if (discs == (0x0000021f1c181000ULL | 0x10f840e000000402ULL)){
                 std::cerr << "found" << std::endl;
             }
+            /*
             uint64_t any_color_discs = 0;
             uint64_t discs_copy = discs;
             for (uint_fast8_t cell = first_bit(&discs_copy); discs_copy; cell = next_bit(&discs_copy)){
@@ -447,20 +515,18 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
                 if (discs == (0x0000021f1c181000ULL | 0x10f840e000000402ULL)){
                     std::cerr << "OK" << std::endl;
                 }
-                /*
                 Board board;
                 board.player = 1ULL << ctz(any_color_discs);
                 board.opponent = 0;
                 any_color_discs &= ~board.player;
                 generate_boards(&board, any_color_discs, fixed_color_discs, pop_count_ull(discs) / 2, n_boards, n_solutions);
-                */
             }
-            /*
+            */
             Board board;
             board.player = 0;
             board.opponent = 0;
-            generate_boards(&board, discs, pop_count_ull(discs) / 2, n_boards, n_solutions);
-            */
+            std::vector<uint64_t> groups = div_groups(discs, 0);
+            generate_boards(&board, groups, 0, pop_count_ull(discs) / 2, n_boards, n_solutions);
         }
         return;
     }
@@ -507,12 +573,11 @@ int main(int argc, char* argv[]){
 
     // need 1 or more full line to cause gameover by draw  (because there are both black and white discs)
     const std::vector<Task> tasks = {
-        {0x008042ff1c181402ULL, 20}
         //{0x8040201008040201ULL | 0x0000001818000000ULL, 20}, // a1-h8 (4 solutions found at depth 20)
         //{0x0000000000FF0000ULL | 0x0000001818000000ULL, 20}, // a6-h6 (4 solutions (same as a1-h8 lines) found at depth 20)
         //{0x00000000FF000000ULL | 0x0000001818000000ULL, 20}, // a5-h5
         
-        //{0x0080402010080402ULL | 0x0000001818000000ULL, 20}, // a2-g8
+        {0x0080402010080402ULL | 0x0000001818000000ULL, 20}, // a2-g8
         
         //{0x0000804020100804ULL | 0x0000001818000000ULL, 20}, // a3-f8
         //{0x0000008040201008ULL | 0x0000001818000000ULL, 20}, // a4-e8
