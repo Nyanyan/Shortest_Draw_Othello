@@ -100,6 +100,11 @@ void find_path_p(Board *board, std::vector<int> &path, int player, const uint64_
         ++(*n_solutions);
         return;
     }
+    if (player != goal_player && board->player == goal->opponent && board->opponent == goal->player){
+        output_transcript(path);
+        ++(*n_solutions);
+        return;
+    }
     uint64_t goal_board_player, goal_board_opponent;
     if (player != goal_player){
         goal_board_player = goal->opponent;
@@ -372,6 +377,7 @@ void generate_boards(Board *board, std::vector<uint64_t> &groups, int group_idx,
     if (group_idx >= groups.size()){
         if (board->is_end() && board->score_player() == 0){ // game over
             ++(*n_boards);
+            //board->print();
             find_path(board, n_solutions);
         }
         return;
@@ -483,54 +489,26 @@ std::vector<uint64_t> div_groups(uint64_t discs, uint64_t done_discs){
 }
 
 // generate silhouettes
-void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions, std::unordered_set<uint64_t> &seen_unique_discs, std::unordered_set<uint64_t> &task_duplication_discs, bool connected, int max_memo_depth){
-    /*
-    uint64_t unique_discs = get_unique_discs(discs);
-    int n_discs = pop_count_ull(discs);
-    if (n_discs <= 4 + MAX_DUPLICATION_CHECK_DEPTH){
-        if (task_duplication_discs.find(unique_discs) != task_duplication_discs.end()){
-            return;
-        }
-        task_duplication_discs.emplace(unique_discs);
-    } else if (n_discs <= 4 + max_memo_depth){
-        if (seen_unique_discs.find(unique_discs) != seen_unique_discs.end()){
-            return;
-        }
-        seen_unique_discs.emplace(unique_discs);
-    }
-    */
+void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions, bool connected, int max_memo_depth){
     if (!connected){
         connected = check_all_connected(discs);
     }
     if (depth == 0){
         if (connected){
             ++(*n_silhouettes);
-            
+            /*
             if (discs == (0x0000021f1c181000ULL | 0x10f840e000000402ULL)){
                 std::cerr << "found" << std::endl;
-                //std::exit(0);
-            }
-            
-            /*
-            uint64_t any_color_discs = 0;
-            uint64_t discs_copy = discs;
-            for (uint_fast8_t cell = first_bit(&discs_copy); discs_copy; cell = next_bit(&discs_copy)){
-                for (int i = 0; i < 4; ++i){
-                    if ((discs & bit_line[cell][i]) == bit_line[cell][i]){
-                        any_color_discs |= 1ULL << cell;
-                    }
-                }
-            }
-            uint64_t fixed_color_discs = discs & ~any_color_discs;
-            if (any_color_discs){
-                if (discs == (0x0000021f1c181000ULL | 0x10f840e000000402ULL)){
-                    std::cerr << "OK" << std::endl;
-                }
                 Board board;
-                board.player = 1ULL << ctz(any_color_discs);
+                board.player = 0;
                 board.opponent = 0;
-                any_color_discs &= ~board.player;
-                generate_boards(&board, any_color_discs, fixed_color_discs, pop_count_ull(discs) / 2, n_boards, n_solutions);
+                std::vector<uint64_t> groups = div_groups(discs, 0);
+                std::cerr << groups.size() << std::endl;
+                bit_print_board(discs);
+                for (uint64_t elem: groups){
+                    bit_print_board(elem);
+                }
+                generate_boards(&board, groups, 0, pop_count_ull(discs) / 2, n_boards, n_solutions);
             }
             */
             Board board;
@@ -552,6 +530,7 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
     neighbours |= ((discs & 0xFEFEFEFEFEFEFE00ULL) >> 9) & ((discs & 0xFCFCFCFCFCFC0000ULL) >> 18);
     neighbours &= ~discs;
     uint64_t puttable = neighbours & ~seen_cells;
+    /*
     if (black_line_mirror(discs) == discs){
         puttable ^= black_line_mirror(puttable) & puttable & 0xFFFEFCF8F0E0C080ULL;
     }
@@ -564,12 +543,13 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
     if (horizontal_mirror(discs) == discs){
         puttable ^= horizontal_mirror(puttable) & puttable & 0x0F0F0F0F0F0F0F0FULL;
     }
+    */
     if (puttable){
         for (uint_fast8_t cell = first_bit(&puttable); puttable; cell = next_bit(&puttable)){
             uint64_t cell_bit = 1ULL << cell;
             seen_cells ^= cell_bit;
             discs ^= cell_bit;
-                generate_silhouettes(discs, depth - 1, seen_cells, n_silhouettes, n_boards, n_solutions, seen_unique_discs, task_duplication_discs, connected, max_memo_depth);
+                generate_silhouettes(discs, depth - 1, seen_cells, n_silhouettes, n_boards, n_solutions, connected, max_memo_depth);
             discs ^= cell_bit;
         }
     }
@@ -609,20 +589,17 @@ int main(int argc, char* argv[]){
         std::cout << std::endl;
     }
     uint64_t strt = tim();
-    std::vector<std::unordered_set<uint64_t>> duplications(tasks.size());
     for (int depth = 2; depth <= 20; depth += 2){
         std::cout << "depth " << depth << " start" << std::endl;
         std::cerr << "depth " << depth << " start" << std::endl;
         uint64_t sum_n_silhouettes = 0, sum_n_boards = 0, sum_n_solutions = 0;
         int task_idx = 0;
-        std::unordered_set<uint64_t> task_duplication_discs;
         for (Task task: tasks){
-            std::unordered_set<uint64_t> seen_unique_discs;
             std::cerr << "\rtask " << task_idx << "/" << tasks.size();
             std::cout << "task " << task_idx << "/" << tasks.size() << std::endl;
             uint64_t n_silhouettes = 0, n_boards = 0, n_solutions = 0;
             if (depth + 4 - pop_count_ull(task.first_silhouette) >= 0){
-                generate_silhouettes(task.first_silhouette, depth + 4 - pop_count_ull(task.first_silhouette), 0, &n_silhouettes, &n_boards, &n_solutions, seen_unique_discs, task_duplication_discs, false, task.max_memo_depth);
+                generate_silhouettes(task.first_silhouette, depth + 4 - pop_count_ull(task.first_silhouette), 0, &n_silhouettes, &n_boards, &n_solutions, false, task.max_memo_depth);
             }
             sum_n_silhouettes += n_silhouettes;
             sum_n_boards += n_boards;
