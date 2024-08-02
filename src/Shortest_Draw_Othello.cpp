@@ -467,21 +467,6 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
     if (depth == 0){
         if (connected){
             ++(*n_silhouettes);
-            /*
-            if (discs == (0x0000021f1c181000ULL | 0x10f840e000000402ULL)){
-                std::cerr << "found" << std::endl;
-                Board board;
-                board.player = 0;
-                board.opponent = 0;
-                std::vector<uint64_t> groups = div_groups(discs, 0);
-                std::cerr << groups.size() << std::endl;
-                bit_print_board(discs);
-                for (uint64_t elem: groups){
-                    bit_print_board(elem);
-                }
-                generate_boards(&board, groups, 0, pop_count_ull(discs) / 2, n_boards, n_solutions);
-            }
-            */
             Board board;
             board.player = 0;
             board.opponent = 0;
@@ -502,6 +487,7 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
     neighbours &= ~discs;
     uint64_t puttable = neighbours & ~seen_cells;
     /*
+    // to consider mirroring (slow)
     if (black_line_mirror(discs) == discs){
         puttable ^= black_line_mirror(puttable) & puttable & 0xFFFEFCF8F0E0C080ULL;
     }
