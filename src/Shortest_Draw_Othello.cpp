@@ -11,11 +11,8 @@
 #include <iostream>
 #include <unordered_set>
 #include <fstream>
-#include <vector>
-#include <algorithm>
 #include "engine/board.hpp"
 #include "engine/util.hpp"
-
 
 void init(){
     bit_init();
@@ -247,13 +244,12 @@ void find_path_p(Board *board, std::vector<int> &path, int player, const uint64_
 // find path to the given board
 void find_path(Board *goal, uint64_t *n_solutions, std::vector<std::pair<Board, std::unordered_set<std::string>>> &data){
     uint64_t goal_mask = goal->player | goal->opponent; // legal candidate
-	uint64_t s0 = (goal_mask >> 1) & (goal_mask << 1) & 0x7e7e7e7e7e7e7e7eull;
-	uint64_t s1 = (goal_mask >> 8) & (goal_mask << 8);
-	uint64_t s2 = (goal_mask >> 9) & (goal_mask << 9) & 0x7e7e7e7e7e7e7e7eull;
-	uint64_t s3 = (goal_mask >> 7) & (goal_mask << 7) & 0x7e7e7e7e7e7e7e7eull;
-	uint64_t corner_mask = goal_mask & ~(s0 | s1 | s2 | s3);
-
-
+    uint64_t s0 = (goal_mask >> 1) & (goal_mask << 1) & 0x7e7e7e7e7e7e7e7eull;
+    uint64_t s1 = (goal_mask >> 8) & (goal_mask << 8);
+    uint64_t s2 = (goal_mask >> 9) & (goal_mask << 9) & 0x7e7e7e7e7e7e7e7eull;
+    uint64_t s3 = (goal_mask >> 7) & (goal_mask << 7) & 0x7e7e7e7e7e7e7e7eull;
+    uint64_t corner_mask = goal_mask & ~(s0 | s1 | s2 | s3);
+    
     //bit_print_board(goal_mask);
     //bit_print_board(corner_mask);
 
@@ -274,78 +270,100 @@ void find_path(Board *goal, uint64_t *n_solutions, std::vector<std::pair<Board, 
 }
 /***** from https://github.com/Nyanyan/Reverse_Othello end *****/
 
-// check whether all discs are connected
-bool check_all_connected(uint64_t discs){
-    uint64_t visited = 0;
-    uint64_t n_visited = 1ULL << ctz(discs);
-    while (visited != n_visited){
-        visited = n_visited;
-        n_visited |= (visited & 0x7F7F7F7F7F7F7F7FULL) << 1;
-        n_visited |= (visited & 0xFEFEFEFEFEFEFEFEULL) >> 1;
-        n_visited |= (visited & 0x00FFFFFFFFFFFFFFULL) << 8;
-        n_visited |= (visited & 0xFFFFFFFFFFFFFF00ULL) >> 8;
-        n_visited |= (visited & 0x00FEFEFEFEFEFEFEULL) << 7;
-        n_visited |= (visited & 0x7F7F7F7F7F7F7F00ULL) >> 7;
-        n_visited |= (visited & 0x007F7F7F7F7F7F7FULL) << 9;
-        n_visited |= (visited & 0xFEFEFEFEFEFEFE00ULL) >> 9;
-        n_visited &= discs;
-    }
-    return visited == discs;
-}
+constexpr uint64_t bit_line[HW2][4] = {
+    {0x00000000000000FEULL, 0x0101010101010100ULL, 0x0000000000000000ULL, 0x8040201008040200ULL},
+    {0x00000000000000FDULL, 0x0202020202020200ULL, 0x0000000000000100ULL, 0x0080402010080400ULL},
+    {0x00000000000000FBULL, 0x0404040404040400ULL, 0x0000000000010200ULL, 0x0000804020100800ULL},
+    {0x00000000000000F7ULL, 0x0808080808080800ULL, 0x0000000001020400ULL, 0x0000008040201000ULL},
+    {0x00000000000000EFULL, 0x1010101010101000ULL, 0x0000000102040800ULL, 0x0000000080402000ULL},
+    {0x00000000000000DFULL, 0x2020202020202000ULL, 0x0000010204081000ULL, 0x0000000000804000ULL},
+    {0x00000000000000BFULL, 0x4040404040404000ULL, 0x0001020408102000ULL, 0x0000000000008000ULL},
+    {0x000000000000007FULL, 0x8080808080808000ULL, 0x0102040810204000ULL, 0x0000000000000000ULL},
+    {0x000000000000FE00ULL, 0x0101010101010001ULL, 0x0000000000000002ULL, 0x4020100804020000ULL},
+    {0x000000000000FD00ULL, 0x0202020202020002ULL, 0x0000000000010004ULL, 0x8040201008040001ULL},
+    {0x000000000000FB00ULL, 0x0404040404040004ULL, 0x0000000001020008ULL, 0x0080402010080002ULL},
+    {0x000000000000F700ULL, 0x0808080808080008ULL, 0x0000000102040010ULL, 0x0000804020100004ULL},
+    {0x000000000000EF00ULL, 0x1010101010100010ULL, 0x0000010204080020ULL, 0x0000008040200008ULL},
+    {0x000000000000DF00ULL, 0x2020202020200020ULL, 0x0001020408100040ULL, 0x0000000080400010ULL},
+    {0x000000000000BF00ULL, 0x4040404040400040ULL, 0x0102040810200080ULL, 0x0000000000800020ULL},
+    {0x0000000000007F00ULL, 0x8080808080800080ULL, 0x0204081020400000ULL, 0x0000000000000040ULL},
+    {0x0000000000FE0000ULL, 0x0101010101000101ULL, 0x0000000000000204ULL, 0x2010080402000000ULL},
+    {0x0000000000FD0000ULL, 0x0202020202000202ULL, 0x0000000001000408ULL, 0x4020100804000100ULL},
+    {0x0000000000FB0000ULL, 0x0404040404000404ULL, 0x0000000102000810ULL, 0x8040201008000201ULL},
+    {0x0000000000F70000ULL, 0x0808080808000808ULL, 0x0000010204001020ULL, 0x0080402010000402ULL},
+    {0x0000000000EF0000ULL, 0x1010101010001010ULL, 0x0001020408002040ULL, 0x0000804020000804ULL},
+    {0x0000000000DF0000ULL, 0x2020202020002020ULL, 0x0102040810004080ULL, 0x0000008040001008ULL},
+    {0x0000000000BF0000ULL, 0x4040404040004040ULL, 0x0204081020008000ULL, 0x0000000080002010ULL},
+    {0x00000000007F0000ULL, 0x8080808080008080ULL, 0x0408102040000000ULL, 0x0000000000004020ULL},
+    {0x00000000FE000000ULL, 0x0101010100010101ULL, 0x0000000000020408ULL, 0x1008040200000000ULL},
+    {0x00000000FD000000ULL, 0x0202020200020202ULL, 0x0000000100040810ULL, 0x2010080400010000ULL},
+    {0x00000000FB000000ULL, 0x0404040400040404ULL, 0x0000010200081020ULL, 0x4020100800020100ULL},
+    {0x00000000F7000000ULL, 0x0808080800080808ULL, 0x0001020400102040ULL, 0x8040201000040201ULL},
+    {0x00000000EF000000ULL, 0x1010101000101010ULL, 0x0102040800204080ULL, 0x0080402000080402ULL},
+    {0x00000000DF000000ULL, 0x2020202000202020ULL, 0x0204081000408000ULL, 0x0000804000100804ULL},
+    {0x00000000BF000000ULL, 0x4040404000404040ULL, 0x0408102000800000ULL, 0x0000008000201008ULL},
+    {0x000000007F000000ULL, 0x8080808000808080ULL, 0x0810204000000000ULL, 0x0000000000402010ULL},
+    {0x000000FE00000000ULL, 0x0101010001010101ULL, 0x0000000002040810ULL, 0x0804020000000000ULL},
+    {0x000000FD00000000ULL, 0x0202020002020202ULL, 0x0000010004081020ULL, 0x1008040001000000ULL},
+    {0x000000FB00000000ULL, 0x0404040004040404ULL, 0x0001020008102040ULL, 0x2010080002010000ULL},
+    {0x000000F700000000ULL, 0x0808080008080808ULL, 0x0102040010204080ULL, 0x4020100004020100ULL},
+    {0x000000EF00000000ULL, 0x1010100010101010ULL, 0x0204080020408000ULL, 0x8040200008040201ULL},
+    {0x000000DF00000000ULL, 0x2020200020202020ULL, 0x0408100040800000ULL, 0x0080400010080402ULL},
+    {0x000000BF00000000ULL, 0x4040400040404040ULL, 0x0810200080000000ULL, 0x0000800020100804ULL},
+    {0x0000007F00000000ULL, 0x8080800080808080ULL, 0x1020400000000000ULL, 0x0000000040201008ULL},
+    {0x0000FE0000000000ULL, 0x0101000101010101ULL, 0x0000000204081020ULL, 0x0402000000000000ULL},
+    {0x0000FD0000000000ULL, 0x0202000202020202ULL, 0x0001000408102040ULL, 0x0804000100000000ULL},
+    {0x0000FB0000000000ULL, 0x0404000404040404ULL, 0x0102000810204080ULL, 0x1008000201000000ULL},
+    {0x0000F70000000000ULL, 0x0808000808080808ULL, 0x0204001020408000ULL, 0x2010000402010000ULL},
+    {0x0000EF0000000000ULL, 0x1010001010101010ULL, 0x0408002040800000ULL, 0x4020000804020100ULL},
+    {0x0000DF0000000000ULL, 0x2020002020202020ULL, 0x0810004080000000ULL, 0x8040001008040201ULL},
+    {0x0000BF0000000000ULL, 0x4040004040404040ULL, 0x1020008000000000ULL, 0x0080002010080402ULL},
+    {0x00007F0000000000ULL, 0x8080008080808080ULL, 0x2040000000000000ULL, 0x0000004020100804ULL},
+    {0x00FE000000000000ULL, 0x0100010101010101ULL, 0x0000020408102040ULL, 0x0200000000000000ULL},
+    {0x00FD000000000000ULL, 0x0200020202020202ULL, 0x0100040810204080ULL, 0x0400010000000000ULL},
+    {0x00FB000000000000ULL, 0x0400040404040404ULL, 0x0200081020408000ULL, 0x0800020100000000ULL},
+    {0x00F7000000000000ULL, 0x0800080808080808ULL, 0x0400102040800000ULL, 0x1000040201000000ULL},
+    {0x00EF000000000000ULL, 0x1000101010101010ULL, 0x0800204080000000ULL, 0x2000080402010000ULL},
+    {0x00DF000000000000ULL, 0x2000202020202020ULL, 0x1000408000000000ULL, 0x4000100804020100ULL},
+    {0x00BF000000000000ULL, 0x4000404040404040ULL, 0x2000800000000000ULL, 0x8000201008040201ULL},
+    {0x007F000000000000ULL, 0x8000808080808080ULL, 0x4000000000000000ULL, 0x0000402010080402ULL},
+    {0xFE00000000000000ULL, 0x0001010101010101ULL, 0x0002040810204080ULL, 0x0000000000000000ULL},
+    {0xFD00000000000000ULL, 0x0002020202020202ULL, 0x0004081020408000ULL, 0x0001000000000000ULL},
+    {0xFB00000000000000ULL, 0x0004040404040404ULL, 0x0008102040800000ULL, 0x0002010000000000ULL},
+    {0xF700000000000000ULL, 0x0008080808080808ULL, 0x0010204080000000ULL, 0x0004020100000000ULL},
+    {0xEF00000000000000ULL, 0x0010101010101010ULL, 0x0020408000000000ULL, 0x0008040201000000ULL},
+    {0xDF00000000000000ULL, 0x0020202020202020ULL, 0x0040800000000000ULL, 0x0010080402010000ULL},
+    {0xBF00000000000000ULL, 0x0040404040404040ULL, 0x0080000000000000ULL, 0x0020100804020100ULL},
+    {0x7F00000000000000ULL, 0x0080808080808080ULL, 0x0000000000000000ULL, 0x0040201008040201ULL}
+};
 
 // generate draw endgame
 void generate_boards(Board *board, int n_discs_half, uint64_t *n_boards, uint64_t *n_solutions, std::vector<std::pair<Board, std::unordered_set<std::string>>> &data){
 	uint64_t ba = board->player;
 
-	uint64_t s1 = ba;
-	s1 &= (s1 >> 4);
-	s1 &= (s1 >> 2);
-	s1 &= (s1 >> 1);
-	s1 &= 0x0101010101010101ull;
-	s1 *= 0xff;
-
-	uint64_t s8 = ba;
-	s8 &= (s8 >> 32) | (s8 << 32);
-	s8 &= (s8 >> 16) | (s8 << 48);
-	s8 &= (s8 >> 8) | (s8 << 56);
-
-	uint64_t s7 = ~ba;
-	uint64_t t7 = (s7 | (s7 >> 28)) & 0xf0f0f0f0;
-	s7 |= t7; s7 |= (t7 << 28);
-	t7 = (s7 | (s7 >> 14)) & 0x0000fcfcfcfcfcfcull;
-	s7 |= t7; s7 |= (t7 << 14);
-	t7 = (s7 | (s7 >> 7)) & 0x00fefefefefefefeull;
-	s7 |= t7; s7 |= (t7 << 7);
-	s7 = ~s7;
-
-	uint64_t s9 = ~ba;
-	uint64_t t9 = (s9 | (s9 >> 36)) & 0x0f0f0f0f;
-	s9 |= t9; s9 |= (t9 << 36);
-	t9 = (s9 | (s9 >> 18)) & 0x00003f3f3f3f3f3full;
-	s9 |= t9; s9 |= (t9 << 18);
-	t9 = (s9 | (s9 >> 9)) & 0x007f7f7f7f7f7f7full;
-	s9 |= t9; s9 |= (t9 << 9);
-	s9 = ~s9;
-
-
 	std::vector<uint64_t> chunk;
-	auto el = [&](uint64_t b0, uint64_t m, int d) {
-		for (uint64_t b = ~((b0 << d) & m) & b0; b; b &= b - 1) {
-			uint64_t x = b & -b;
-			x |= (x << d) & m;
-			x |= (x << d) & m;
-			x |= (x << d) & m;
-			x |= (x << d) & m;
-			x |= (x << d) & m;
-			x |= (x << d) & m;
-			chunk.push_back (x);
+	for (uint64_t b = ba; b; b &= b - 1) {
+		int cell = ctz (b);
+		uint64_t cell_bit = 1ull << cell;
+		uint64_t c = cell_bit;
+		if (bit_line[cell][0] & ~ba) {
+			c |= (cell_bit >> 1) & 0x7f7f7f7f7f7f7f7full;
+			c |= (cell_bit << 1) & 0xfefefefefefefefeull;
 		}
-	};
-
-	el (ba & ~s1, ba & 0xfefefefefefefefeull, 1);
-	el (ba & ~s8, ba & 0xffffffffffffff00ull, 8);
-	el (ba & ~s7, ba & 0x7f7f7f7f7f7f7f00ull, 7);
-	el (ba & ~s9, ba & 0xfefefefefefefe00ull, 9);
+		if (bit_line[cell][1] & ~ba) {
+			c |= (cell_bit >> 8);
+			c |= (cell_bit << 8);
+		}
+		if (bit_line[cell][2] & ~ba) {
+			c |= (cell_bit >> 7) & 0x00fefefefefefefeull;
+			c |= (cell_bit << 7) & 0x7f7f7f7f7f7f7f00ull;
+		}
+		if (bit_line[cell][3] & ~ba) {
+			c |= (cell_bit >> 9) & 0x007f7f7f7f7f7f7full;
+			c |= (cell_bit << 9) & 0xfefefefefefefe00ull;
+		}
+		chunk.push_back (c & ba);
+	}
 
 	uint64_t bb = 0;
 	for (auto e = chunk.begin (); e != chunk.end ();) {
@@ -384,6 +402,25 @@ void generate_boards(Board *board, int n_discs_half, uint64_t *n_boards, uint64_
 	}
 }
 
+// check whether all discs are connected
+bool check_all_connected(uint64_t discs){
+    uint64_t visited = 0;
+    uint64_t n_visited = 1ULL << ctz(discs);
+    while (visited != n_visited){
+        visited = n_visited;
+        n_visited |= (visited & 0x7F7F7F7F7F7F7F7FULL) << 1;
+        n_visited |= (visited & 0xFEFEFEFEFEFEFEFEULL) >> 1;
+        n_visited |= (visited & 0x00FFFFFFFFFFFFFFULL) << 8;
+        n_visited |= (visited & 0xFFFFFFFFFFFFFF00ULL) >> 8;
+        n_visited |= (visited & 0x00FEFEFEFEFEFEFEULL) << 7;
+        n_visited |= (visited & 0x7F7F7F7F7F7F7F00ULL) >> 7;
+        n_visited |= (visited & 0x007F7F7F7F7F7F7FULL) << 9;
+        n_visited |= (visited & 0xFEFEFEFEFEFEFE00ULL) >> 9;
+        n_visited &= discs;
+    }
+    return visited == discs;
+}
+
 // generate silhouettes
 void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions, bool connected, int max_memo_depth, std::vector<std::pair<Board, std::unordered_set<std::string>>> &data){
     if (!connected){
@@ -392,25 +429,10 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
     if (depth == 0){
         if (connected){
             ++(*n_silhouettes);
-            /*
-            if (discs == (0x0000021f1c181000ULL | 0x10f840e000000402ULL)){
-                std::cerr << "found" << std::endl;
-                Board board;
-                board.player = 0;
-                board.opponent = 0;
-                std::vector<uint64_t> groups = div_groups(discs, 0);
-                std::cerr << groups.size() << std::endl;
-                bit_print_board(discs);
-                for (uint64_t elem: groups){
-                    bit_print_board(elem);
-                }
-                generate_boards(&board, groups, 0, pop_count_ull(discs) / 2, n_boards, n_solutions);
-            }
-            */
             Board board;
-			board.player = discs;
+            board.player = discs;
             board.opponent = 0;
-			generate_boards(&board, pop_count_ull(discs) / 2, n_boards, n_solutions, data);
+            generate_boards(&board, pop_count_ull(discs) / 2, n_boards, n_solutions, data);
         }
         return;
     }
@@ -426,6 +448,7 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
     neighbours &= ~discs;
     uint64_t puttable = neighbours & ~seen_cells;
     /*
+    // to consider mirroring (slow)
     if (black_line_mirror(discs) == discs){
         puttable ^= black_line_mirror(puttable) & puttable & 0xFFFEFCF8F0E0C080ULL;
     }
