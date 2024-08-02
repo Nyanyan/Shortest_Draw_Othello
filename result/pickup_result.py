@@ -9,6 +9,12 @@ for datum in data:
 
 print(len(set_data))
 
+with open('result_all_pickup.txt', 'w') as f:
+    f.write(str(len(set_data)) + '\n')
+    for elem in set_data:
+        f.write(elem + '\n')
+
+'''
 set_data2 = set([])
 
 for elem in set_data:
@@ -43,5 +49,7 @@ for elem in set_data:
 print(len(set_data2))
 
 with open('result_all_pickup.txt', 'w') as f:
+    f.write(str(len(set_data2)) + '\n')
     for elem in set_data2:
         f.write(elem + '\n')
+'''
