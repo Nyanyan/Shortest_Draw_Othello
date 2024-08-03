@@ -338,31 +338,29 @@ constexpr uint64_t bit_line[HW2][4] = {
 };
 
 // generate draw endgame
-void generate_boards(Board *board, int n_discs_half, uint64_t *n_boards, uint64_t *n_solutions, std::vector<std::pair<Board, std::unordered_set<std::string>>> &data){
-	uint64_t ba = board->player;
-
+void generate_boards(uint64_t silhouette, int n_discs_half, uint64_t *n_boards, uint64_t *n_solutions, std::vector<std::pair<Board, std::unordered_set<std::string>>> &data){
 	std::vector<uint64_t> chunk;
-	for (uint64_t b = ba; b; b &= b - 1) {
+	for (uint64_t b = silhouette; b; b &= b - 1) {
 		int cell = ctz(b);
 		uint64_t cell_bit = 1ULL << cell;
 		uint64_t c = cell_bit;
-		if (bit_line[cell][0] & ~ba) {
+		if (bit_line[cell][0] & ~silhouette) {
 			c |= (cell_bit >> 1) & 0x7F7F7F7F7F7F7F7FULL;
 			c |= (cell_bit << 1) & 0xFEFEFEFEFEFEFEFEULL;
 		}
-		if (bit_line[cell][1] & ~ba) {
+		if (bit_line[cell][1] & ~silhouette) {
 			c |= (cell_bit >> 8);
 			c |= (cell_bit << 8);
 		}
-		if (bit_line[cell][2] & ~ba) {
+		if (bit_line[cell][2] & ~silhouette) {
 			c |= (cell_bit >> 7) & 0x00FEFEFEFEFEFEFEULL;
 			c |= (cell_bit << 7) & 0x7F7F7F7F7F7F7F00ULL;
 		}
-		if (bit_line[cell][3] & ~ba) {
+		if (bit_line[cell][3] & ~silhouette) {
 			c |= (cell_bit >> 9) & 0x007F7F7F7F7F7F7FULL;
 			c |= (cell_bit << 9) & 0xFEFEFEFEFEFEFE00ULL;
 		}
-		chunk.push_back(c & ba);
+		chunk.push_back(c & silhouette);
 	}
 
 	uint64_t bb = 0;
@@ -381,23 +379,24 @@ void generate_boards(Board *board, int n_discs_half, uint64_t *n_boards, uint64_
 		}
 	}
 
-	for (uint64_t b = ba & ~bb; b; b &= b - 1)
+	for (uint64_t b = silhouette & ~bb; b; b &= b - 1)
 		chunk.push_back(b & -(int64_t)b);
 
+    Board board;
 	for (int i = 1; i < (1 << chunk.size() - 1); i++) {
-		uint64_t bb = 0;
+		uint64_t player = 0;
 		for (int j = 0; j < chunk.size(); j++) {
 			if (i & (1 << j)) {
-				bb |= chunk[j];
-				if (pop_count_ull(bb) > n_discs_half)
+				player |= chunk[j];
+				if (pop_count_ull(player) > n_discs_half)
 					break;
 			}
 		}
-		if (pop_count_ull(bb) == n_discs_half) {
-			board->player = bb;
-			board->opponent = ba & ~bb;
+		if (pop_count_ull(player) == n_discs_half) {
+			board.player = player;
+			board.opponent = silhouette & ~player;
     	    ++(*n_boards);
-            find_path(board, n_solutions, data);
+            find_path(&board, n_solutions, data);
 		}
 	}
 }
@@ -429,10 +428,7 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
     if (depth == 0){
         if (connected){
             ++(*n_silhouettes);
-            Board board;
-            board.player = discs;
-            board.opponent = 0;
-            generate_boards(&board, pop_count_ull(discs) / 2, n_boards, n_solutions, data);
+            generate_boards(discs, pop_count_ull(discs) / 2, n_boards, n_solutions, data);
         }
         return;
     }
