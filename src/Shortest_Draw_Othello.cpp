@@ -411,8 +411,8 @@ bool check_all_connected(uint64_t discs){
         visited = n_visited;
         n_visited |= (visited & 0x7F7F7F7F7F7F7F7FULL) << 1;
         n_visited |= (visited & 0xFEFEFEFEFEFEFEFEULL) >> 1;
-        n_visited |= (visited & 0x00FFFFFFFFFFFFFFULL) << 8;
-        n_visited |= (visited & 0xFFFFFFFFFFFFFF00ULL) >> 8;
+        n_visited |= visited << 8;
+        n_visited |= visited >> 8;
         n_visited |= (visited & 0x00FEFEFEFEFEFEFEULL) << 7;
         n_visited |= (visited & 0x7F7F7F7F7F7F7F00ULL) >> 7;
         n_visited |= (visited & 0x007F7F7F7F7F7F7FULL) << 9;
@@ -437,8 +437,8 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
     uint64_t neighbours = 0;
     neighbours |= ((discs & 0x7F7F7F7F7F7F7F7FULL) << 1) & ((discs & 0x3F3F3F3F3F3F3F3FULL) << 2);
     neighbours |= ((discs & 0xFEFEFEFEFEFEFEFEULL) >> 1) & ((discs & 0xFCFCFCFCFCFCFCFCULL) >> 2);
-    neighbours |= ((discs & 0x00FFFFFFFFFFFFFFULL) << 8) & ((discs & 0x0000FFFFFFFFFFFFULL) << 16);
-    neighbours |= ((discs & 0xFFFFFFFFFFFFFF00ULL) >> 8) & ((discs & 0xFFFFFFFFFFFF0000ULL) >> 16);
+    neighbours |= (discs << 8) & (discs << 16);
+    neighbours |= (discs >> 8) & (discs >> 16);
     neighbours |= ((discs & 0x00FEFEFEFEFEFEFEULL) << 7) & ((discs & 0x0000FCFCFCFCFCFCULL) << 14);
     neighbours |= ((discs & 0x7F7F7F7F7F7F7F00ULL) >> 7) & ((discs & 0x3F3F3F3F3F3F0000ULL) >> 14);
     neighbours |= ((discs & 0x007F7F7F7F7F7F7FULL) << 9) & ((discs & 0x00003F3F3F3F3F3FULL) << 18);
