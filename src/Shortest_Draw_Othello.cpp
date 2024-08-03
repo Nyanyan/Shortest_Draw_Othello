@@ -132,58 +132,58 @@ Board play_board(std::string transcript){
 }
 
 /***** from https://github.com/Nyanyan/Reverse_Othello start *****/
-inline uint64_t full_stability_h(uint64_t full){
-    full &= full >> 1;
-    full &= full >> 2;
-    full &= full >> 4;
-    return (full & 0x0101010101010101ULL) * 0xFF;
+inline uint64_t fULL_stability_h(uint64_t fULL){
+    fULL &= fULL >> 1;
+    fULL &= fULL >> 2;
+    fULL &= fULL >> 4;
+    return (fULL & 0x0101010101010101ULL) * 0xFF;
 }
 
-inline uint64_t full_stability_v(uint64_t full){
-    full &= (full >> 8) | (full << 56);
-    full &= (full >> 16) | (full << 48);
-    full &= (full >> 32) | (full << 32);
-    return full;
+inline uint64_t fULL_stability_v(uint64_t fULL){
+    fULL &= (fULL >> 8) | (fULL << 56);
+    fULL &= (fULL >> 16) | (fULL << 48);
+    fULL &= (fULL >> 32) | (fULL << 32);
+    return fULL;
 }
 
-inline void full_stability_d(uint64_t full, uint64_t *full_d7, uint64_t *full_d9){
+inline void fULL_stability_d(uint64_t fULL, uint64_t *fULL_d7, uint64_t *fULL_d9){
     constexpr uint64_t edge = 0xFF818181818181FFULL;
     uint64_t l7, r7, l9, r9;
-    l7 = r7 = full;
+    l7 = r7 = fULL;
     l7 &= edge | (l7 >> 7);		r7 &= edge | (r7 << 7);
     l7 &= 0xFFFF030303030303ULL | (l7 >> 14);	r7 &= 0xC0C0C0C0C0C0FFFFULL | (r7 << 14);
     l7 &= 0xFFFFFFFF0F0F0F0FULL | (l7 >> 28);	r7 &= 0xF0F0F0F0FFFFFFFFULL | (r7 << 28);
-    *full_d7 = l7 & r7;
+    *fULL_d7 = l7 & r7;
 
-    l9 = r9 = full;
+    l9 = r9 = fULL;
     l9 &= edge | (l9 >> 9);		r9 &= edge | (r9 << 9);
     l9 &= 0xFFFFC0C0C0C0C0C0ULL | (l9 >> 18);	r9 &= 0x030303030303FFFFULL | (r9 << 18);
-    *full_d9 = l9 & r9 & (0x0F0F0F0FF0F0F0F0ULL | (l9 >> 36) | (r9 << 36));
+    *fULL_d9 = l9 & r9 & (0x0F0F0F0FF0F0F0F0ULL | (l9 >> 36) | (r9 << 36));
 }
 
-inline void full_stability(uint64_t discs, uint64_t *h, uint64_t *v, uint64_t *d7, uint64_t *d9){
-    *h = full_stability_h(discs);
-    *v = full_stability_v(discs);
-    full_stability_d(discs, d7, d9);
+inline void fULL_stability(uint64_t discs, uint64_t *h, uint64_t *v, uint64_t *d7, uint64_t *d9){
+    *h = fULL_stability_h(discs);
+    *v = fULL_stability_v(discs);
+    fULL_stability_d(discs, d7, d9);
 }
 
 inline uint64_t enhanced_stability(Board *board, const uint64_t goal_mask){
-    uint64_t full_h, full_v, full_d7, full_d9;
+    uint64_t fULL_h, fULL_v, fULL_d7, fULL_d9;
     uint64_t discs = board->player | board->opponent;
-    full_stability(discs | ~goal_mask, &full_h, &full_v, &full_d7, &full_d9);
-    full_h &= goal_mask;
-    full_v &= goal_mask;
-    full_d7 &= goal_mask;
-    full_d9 &= goal_mask;
+    fULL_stability(discs | ~goal_mask, &fULL_h, &fULL_v, &fULL_d7, &fULL_d9);
+    fULL_h &= goal_mask;
+    fULL_v &= goal_mask;
+    fULL_d7 &= goal_mask;
+    fULL_d9 &= goal_mask;
     uint64_t h, v, d7, d9;
     uint64_t stability = 0ULL, n_stability;
-    n_stability = discs & (full_h & full_v & full_d7 & full_d9);
+    n_stability = discs & (fULL_h & fULL_v & fULL_d7 & fULL_d9);
     while (n_stability & ~stability){
         stability |= n_stability;
-        h = (stability >> 1) | (stability << 1) | full_h;
-        v = (stability >> 8) | (stability << 8) | full_v;
-        d7 = (stability >> 7) | (stability << 7) | full_d7;
-        d9 = (stability >> 9) | (stability << 9) | full_d9;
+        h = (stability >> 1) | (stability << 1) | fULL_h;
+        v = (stability >> 8) | (stability << 8) | fULL_v;
+        d7 = (stability >> 7) | (stability << 7) | fULL_d7;
+        d9 = (stability >> 9) | (stability << 9) | fULL_d9;
         n_stability = h & v & d7 & d9;
     }
     return stability;
@@ -244,10 +244,10 @@ void find_path_p(Board *board, std::vector<int> &path, int player, const uint64_
 // find path to the given board
 void find_path(Board *goal, uint64_t *n_solutions, std::vector<std::pair<Board, std::unordered_set<std::string>>> &data){
     uint64_t goal_mask = goal->player | goal->opponent; // legal candidate
-    uint64_t s0 = (goal_mask >> 1) & (goal_mask << 1) & 0x7e7e7e7e7e7e7e7eull;
+    uint64_t s0 = (goal_mask >> 1) & (goal_mask << 1) & 0x7e7e7e7e7e7e7e7eULL;
     uint64_t s1 = (goal_mask >> 8) & (goal_mask << 8);
-    uint64_t s2 = (goal_mask >> 9) & (goal_mask << 9) & 0x7e7e7e7e7e7e7e7eull;
-    uint64_t s3 = (goal_mask >> 7) & (goal_mask << 7) & 0x7e7e7e7e7e7e7e7eull;
+    uint64_t s2 = (goal_mask >> 9) & (goal_mask << 9) & 0x7e7e7e7e7e7e7e7eULL;
+    uint64_t s3 = (goal_mask >> 7) & (goal_mask << 7) & 0x7e7e7e7e7e7e7e7eULL;
     uint64_t corner_mask = goal_mask & ~(s0 | s1 | s2 | s3);
     
     //bit_print_board(goal_mask);
@@ -343,38 +343,38 @@ void generate_boards(Board *board, int n_discs_half, uint64_t *n_boards, uint64_
 
 	std::vector<uint64_t> chunk;
 	for (uint64_t b = ba; b; b &= b - 1) {
-		int cell = ctz (b);
-		uint64_t cell_bit = 1ull << cell;
+		int cell = ctz(b);
+		uint64_t cell_bit = 1ULL << cell;
 		uint64_t c = cell_bit;
 		if (bit_line[cell][0] & ~ba) {
-			c |= (cell_bit >> 1) & 0x7f7f7f7f7f7f7f7full;
-			c |= (cell_bit << 1) & 0xfefefefefefefefeull;
+			c |= (cell_bit >> 1) & 0x7F7F7F7F7F7F7F7FULL;
+			c |= (cell_bit << 1) & 0xFEFEFEFEFEFEFEFEULL;
 		}
 		if (bit_line[cell][1] & ~ba) {
 			c |= (cell_bit >> 8);
 			c |= (cell_bit << 8);
 		}
 		if (bit_line[cell][2] & ~ba) {
-			c |= (cell_bit >> 7) & 0x00fefefefefefefeull;
-			c |= (cell_bit << 7) & 0x7f7f7f7f7f7f7f00ull;
+			c |= (cell_bit >> 7) & 0x00FEFEFEFEFEFEFEULL;
+			c |= (cell_bit << 7) & 0x7F7F7F7F7F7F7F00ULL;
 		}
 		if (bit_line[cell][3] & ~ba) {
-			c |= (cell_bit >> 9) & 0x007f7f7f7f7f7f7full;
-			c |= (cell_bit << 9) & 0xfefefefefefefe00ull;
+			c |= (cell_bit >> 9) & 0x007F7F7F7F7F7F7FULL;
+			c |= (cell_bit << 9) & 0xFEFEFEFEFEFEFE00ULL;
 		}
-		chunk.push_back (c & ba);
+		chunk.push_back(c & ba);
 	}
 
 	uint64_t bb = 0;
-	for (auto e = chunk.begin (); e != chunk.end ();) {
-		e = chunk.end ();
-		for (auto i = chunk.begin (); i != chunk.end (); i++) {
-			for (auto j = i + 1; j < chunk.end (); j++) {
+	for (auto e = chunk.begin(); e != chunk.end();) {
+		e = chunk.end();
+		for (auto i = chunk.begin(); i != chunk.end(); i++) {
+			for (auto j = i + 1; j < chunk.end(); j++) {
 				if (*i & *j) {
 					*i |= *j;
-					if (pop_count_ull (*i) > n_discs_half)
+					if (pop_count_ull(*i) > n_discs_half)
 						return;
-					chunk.erase (j--);
+					chunk.erase(j--);
 				}
 			}
 			bb |= *i;
@@ -382,18 +382,18 @@ void generate_boards(Board *board, int n_discs_half, uint64_t *n_boards, uint64_
 	}
 
 	for (uint64_t b = ba & ~bb; b; b &= b - 1)
-		chunk.push_back (b & -b);
+		chunk.push_back(b & -(int64_t)b);
 
-	for (int i = 1; i < (1 << chunk.size () - 1); i++) {
+	for (int i = 1; i < (1 << chunk.size() - 1); i++) {
 		uint64_t bb = 0;
-		for (int j = 0; j < chunk.size (); j++) {
+		for (int j = 0; j < chunk.size(); j++) {
 			if (i & (1 << j)) {
 				bb |= chunk[j];
-				if (pop_count_ull (bb) > n_discs_half)
+				if (pop_count_ull(bb) > n_discs_half)
 					break;
 			}
 		}
-		if (pop_count_ull (bb) == n_discs_half) {
+		if (pop_count_ull(bb) == n_discs_half) {
 			board->player = bb;
 			board->opponent = ba & ~bb;
     	    ++(*n_boards);
@@ -481,7 +481,7 @@ struct Task{
 int main(int argc, char* argv[]){
     init();
 
-    // need 1 or more full line to cause gameover by draw  (because there are both black and white discs)
+    // need 1 or more fULL line to cause gameover by draw  (because there are both black and white discs)
     const std::vector<Task> tasks = {
         {0x8040201008040201ULL | 0x0000001818000000ULL, 20}, // a1-h8
         {0x0000000000FF0000ULL | 0x0000001818000000ULL, 20}, // a6-h6
