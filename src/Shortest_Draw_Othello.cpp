@@ -341,7 +341,7 @@ constexpr uint64_t bit_line[HW2][4] = {
 void generate_boards(uint64_t silhouette, int n_discs_half, uint64_t *n_boards, uint64_t *n_solutions, std::vector<std::pair<Board, std::unordered_set<std::string>>> &data){
 	std::vector<uint64_t> chunk;
     uint64_t silhouette_cpy = silhouette;
-    for (uint_fast8_t cell = first_bit(&silhouette_cpy); silhouette_cpy; cell = next_bit(&silhouette_cpy)){
+    for (uint_fast8_t cell = first_bit(&silhouette_cpy); silhouette_cpy; cell = next_bit(&silhouette_cpy)) {
 		uint64_t cell_bit = 1ULL << cell;
 		uint64_t group = cell_bit;
 		if (bit_line[cell][0] & ~silhouette) {
@@ -360,18 +360,19 @@ void generate_boards(uint64_t silhouette, int n_discs_half, uint64_t *n_boards, 
 			group |= (cell_bit >> 9) & 0x007F7F7F7F7F7F7FULL;
 			group |= (cell_bit << 9) & 0xFEFEFEFEFEFEFE00ULL;
 		}
-		chunk.push_back(group & silhouette);
+		chunk.emplace_back(group & silhouette);
 	}
 
 	uint64_t bb = 0;
 	for (auto e = chunk.begin(); e != chunk.end();) {
 		e = chunk.end();
-		for (auto i = chunk.begin(); i != chunk.end(); i++) {
-			for (auto j = i + 1; j < chunk.end(); j++) {
+		for (auto i = chunk.begin(); i != chunk.end(); ++i) {
+			for (auto j = i + 1; j < chunk.end(); ++j) {
 				if (*i & *j) {
 					*i |= *j;
-					if (pop_count_ull(*i) > n_discs_half)
+					if (pop_count_ull(*i) > n_discs_half) {
 						return;
+                    }
 					chunk.erase(j--);
 				}
 			}
@@ -380,16 +381,17 @@ void generate_boards(uint64_t silhouette, int n_discs_half, uint64_t *n_boards, 
 	}
 
 	for (uint64_t bits = silhouette & ~bb; bits; bits &= bits - 1)
-		chunk.push_back(bits & -(int64_t)bits);
+		chunk.emplace_back(bits & -(int64_t)bits);
 
     Board board;
-	for (int i = 1; i < (1 << chunk.size() - 1); i++) {
+	for (int i = 1; i < (1 << chunk.size() - 1); ++i) {
 		uint64_t player = 0;
-		for (int j = 0; j < chunk.size(); j++) {
+		for (int j = 0; j < chunk.size(); ++j) {
 			if (i & (1 << j)) {
 				player |= chunk[j];
-				if (pop_count_ull(player) > n_discs_half)
+				if (pop_count_ull(player) > n_discs_half) {
 					break;
+                }
 			}
 		}
 		if (pop_count_ull(player) == n_discs_half) {
