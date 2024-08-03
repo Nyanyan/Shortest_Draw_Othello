@@ -340,27 +340,27 @@ constexpr uint64_t bit_line[HW2][4] = {
 // generate draw endgame
 void generate_boards(uint64_t silhouette, int n_discs_half, uint64_t *n_boards, uint64_t *n_solutions, std::vector<std::pair<Board, std::unordered_set<std::string>>> &data){
 	std::vector<uint64_t> chunk;
-	for (uint64_t b = silhouette; b; b &= b - 1) {
-		int cell = ctz(b);
+    uint64_t silhouette_cpy = silhouette;
+    for (uint_fast8_t cell = first_bit(&silhouette_cpy); silhouette_cpy; cell = next_bit(&silhouette_cpy)){
 		uint64_t cell_bit = 1ULL << cell;
-		uint64_t c = cell_bit;
+		uint64_t group = cell_bit;
 		if (bit_line[cell][0] & ~silhouette) {
-			c |= (cell_bit >> 1) & 0x7F7F7F7F7F7F7F7FULL;
-			c |= (cell_bit << 1) & 0xFEFEFEFEFEFEFEFEULL;
+			group |= (cell_bit >> 1) & 0x7F7F7F7F7F7F7F7FULL;
+			group |= (cell_bit << 1) & 0xFEFEFEFEFEFEFEFEULL;
 		}
 		if (bit_line[cell][1] & ~silhouette) {
-			c |= (cell_bit >> 8);
-			c |= (cell_bit << 8);
+			group |= (cell_bit >> 8);
+			group |= (cell_bit << 8);
 		}
 		if (bit_line[cell][2] & ~silhouette) {
-			c |= (cell_bit >> 7) & 0x00FEFEFEFEFEFEFEULL;
-			c |= (cell_bit << 7) & 0x7F7F7F7F7F7F7F00ULL;
+			group |= (cell_bit >> 7) & 0x00FEFEFEFEFEFEFEULL;
+			group |= (cell_bit << 7) & 0x7F7F7F7F7F7F7F00ULL;
 		}
 		if (bit_line[cell][3] & ~silhouette) {
-			c |= (cell_bit >> 9) & 0x007F7F7F7F7F7F7FULL;
-			c |= (cell_bit << 9) & 0xFEFEFEFEFEFEFE00ULL;
+			group |= (cell_bit >> 9) & 0x007F7F7F7F7F7F7FULL;
+			group |= (cell_bit << 9) & 0xFEFEFEFEFEFEFE00ULL;
 		}
-		chunk.push_back(c & silhouette);
+		chunk.push_back(group & silhouette);
 	}
 
 	uint64_t bb = 0;
@@ -379,8 +379,8 @@ void generate_boards(uint64_t silhouette, int n_discs_half, uint64_t *n_boards, 
 		}
 	}
 
-	for (uint64_t b = silhouette & ~bb; b; b &= b - 1)
-		chunk.push_back(b & -(int64_t)b);
+	for (uint64_t bits = silhouette & ~bb; bits; bits &= bits - 1)
+		chunk.push_back(bits & -(int64_t)bits);
 
     Board board;
 	for (int i = 1; i < (1 << chunk.size() - 1); i++) {
