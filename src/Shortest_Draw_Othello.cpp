@@ -244,33 +244,12 @@ void find_path_p(Board *board, std::vector<int> &path, int player, const uint64_
 // find path to the given board
 void find_path(Board *goal, uint64_t *n_solutions, std::vector<std::pair<Board, std::unordered_set<std::string>>> &data){
     uint64_t goal_mask = goal->player | goal->opponent; // legal candidate
-    uint64_t corner_mask = 0ULL; // cells that work as corner (non-flippable cells)
-    uint64_t empty_mask_r1 = ((~goal_mask & 0xFEFEFEFEFEFEFEFEULL) >> 1) | 0x8080808080808080ULL;
-    uint64_t empty_mask_l1 = ((~goal_mask & 0x7F7F7F7F7F7F7F7FULL) << 1) | 0x0101010101010101ULL;
-    uint64_t empty_mask_r8 = ((~goal_mask & 0xFFFFFFFFFFFFFF00ULL) >> 8) | 0xFF00000000000000ULL;
-    uint64_t empty_mask_l8 = ((~goal_mask & 0x00FFFFFFFFFFFFFFULL) << 8) | 0x00000000000000FFULL;
-    uint64_t empty_mask_r7 = ((~goal_mask & 0x7F7F7F7F7F7F7F00ULL) >> 7) | 0xFF01010101010101ULL;
-    uint64_t empty_mask_l7 = ((~goal_mask & 0x00FEFEFEFEFEFEFEULL) << 7) | 0x80808080808080FFULL;
-    uint64_t empty_mask_r9 = ((~goal_mask & 0xFEFEFEFEFEFEFE00ULL) >> 9) | 0x01010101010101FFULL;
-    uint64_t empty_mask_l9 = ((~goal_mask & 0x007F7F7F7F7F7F7FULL) << 9) | 0xFF80808080808080ULL;
-    corner_mask |= empty_mask_r1 & empty_mask_r8 & empty_mask_r9 & empty_mask_r7;
-    corner_mask |= empty_mask_r1 & empty_mask_r8 & empty_mask_r9 & empty_mask_l7;
-    corner_mask |= empty_mask_r1 & empty_mask_r8 & empty_mask_l9 & empty_mask_r7;
-    corner_mask |= empty_mask_r1 & empty_mask_r8 & empty_mask_l9 & empty_mask_l7;
-    corner_mask |= empty_mask_r1 & empty_mask_l8 & empty_mask_r9 & empty_mask_r7;
-    corner_mask |= empty_mask_r1 & empty_mask_l8 & empty_mask_r9 & empty_mask_l7;
-    corner_mask |= empty_mask_r1 & empty_mask_l8 & empty_mask_l9 & empty_mask_r7;
-    corner_mask |= empty_mask_r1 & empty_mask_l8 & empty_mask_l9 & empty_mask_l7;
-    corner_mask |= empty_mask_l1 & empty_mask_r8 & empty_mask_r9 & empty_mask_r7;
-    corner_mask |= empty_mask_l1 & empty_mask_r8 & empty_mask_r9 & empty_mask_l7;
-    corner_mask |= empty_mask_l1 & empty_mask_r8 & empty_mask_l9 & empty_mask_r7;
-    corner_mask |= empty_mask_l1 & empty_mask_r8 & empty_mask_l9 & empty_mask_l7;
-    corner_mask |= empty_mask_l1 & empty_mask_l8 & empty_mask_r9 & empty_mask_r7;
-    corner_mask |= empty_mask_l1 & empty_mask_l8 & empty_mask_r9 & empty_mask_l7;
-    corner_mask |= empty_mask_l1 & empty_mask_l8 & empty_mask_l9 & empty_mask_r7;
-    corner_mask |= empty_mask_l1 & empty_mask_l8 & empty_mask_l9 & empty_mask_l7;
-    corner_mask &= goal_mask;
-
+    uint64_t s0 = (goal_mask >> 1) & (goal_mask << 1) & 0x7e7e7e7e7e7e7e7eull;
+    uint64_t s1 = (goal_mask >> 8) & (goal_mask << 8);
+    uint64_t s2 = (goal_mask >> 9) & (goal_mask << 9) & 0x7e7e7e7e7e7e7e7eull;
+    uint64_t s3 = (goal_mask >> 7) & (goal_mask << 7) & 0x7e7e7e7e7e7e7e7eull;
+    uint64_t corner_mask = goal_mask & ~(s0 | s1 | s2 | s3);
+    
     //bit_print_board(goal_mask);
     //bit_print_board(corner_mask);
 
@@ -358,44 +337,69 @@ constexpr uint64_t bit_line[HW2][4] = {
     {0x7F00000000000000ULL, 0x0080808080808080ULL, 0x0000000000000000ULL, 0x0040201008040201ULL}
 };
 
-constexpr uint64_t bit_neighbour[HW2] = {
-    0x0000000000000302ULL, 0x0000000000000705ULL, 0x0000000000000E0AULL, 0x0000000000001C14ULL, 0x0000000000003828ULL, 0x0000000000007050ULL, 0x000000000000E0A0ULL, 0x000000000000C040ULL, 
-    0x0000000000030203ULL, 0x0000000000070507ULL, 0x00000000000E0A0EULL, 0x00000000001C141CULL, 0x0000000000382838ULL, 0x0000000000705070ULL, 0x0000000000E0A0E0ULL, 0x0000000000C040C0ULL, 
-    0x0000000003020300ULL, 0x0000000007050700ULL, 0x000000000E0A0E00ULL, 0x000000001C141C00ULL, 0x0000000038283800ULL, 0x0000000070507000ULL, 0x00000000E0A0E000ULL, 0x00000000C040C000ULL, 
-    0x0000000302030000ULL, 0x0000000705070000ULL, 0x0000000E0A0E0000ULL, 0x0000001C141C0000ULL, 0x0000003828380000ULL, 0x0000007050700000ULL, 0x000000E0A0E00000ULL, 0x000000C040C00000ULL, 
-    0x0000030203000000ULL, 0x0000070507000000ULL, 0x00000E0A0E000000ULL, 0x00001C141C000000ULL, 0x0000382838000000ULL, 0x0000705070000000ULL, 0x0000E0A0E0000000ULL, 0x0000C040C0000000ULL, 
-    0x0003020300000000ULL, 0x0007050700000000ULL, 0x000E0A0E00000000ULL, 0x001C141C00000000ULL, 0x0038283800000000ULL, 0x0070507000000000ULL, 0x00E0A0E000000000ULL, 0x00C040C000000000ULL, 
-    0x0302030000000000ULL, 0x0705070000000000ULL, 0x0E0A0E0000000000ULL, 0x1C141C0000000000ULL, 0x3828380000000000ULL, 0x7050700000000000ULL, 0xE0A0E00000000000ULL, 0xC040C00000000000ULL, 
-    0x0203000000000000ULL, 0x0507000000000000ULL, 0x0A0E000000000000ULL, 0x141C000000000000ULL, 0x2838000000000000ULL, 0x5070000000000000ULL, 0xA0E0000000000000ULL, 0x40C0000000000000ULL
-};
-
 // generate draw endgame
-void generate_boards(Board *board, std::vector<uint64_t> &groups, int group_idx, int n_discs_half, uint64_t *n_boards, uint64_t *n_solutions, std::vector<std::pair<Board, std::unordered_set<std::string>>> &data){
-    if (group_idx >= groups.size()){
-        if (board->is_end() && board->score_player() == 0){ // game over
-            ++(*n_boards);
-            //board->print();
+void generate_boards(Board *board, int n_discs_half, uint64_t *n_boards, uint64_t *n_solutions, std::vector<std::pair<Board, std::unordered_set<std::string>>> &data){
+	uint64_t ba = board->player;
+
+	std::vector<uint64_t> chunk;
+	for (uint64_t b = ba; b; b &= b - 1) {
+		int cell = ctz (b);
+		uint64_t cell_bit = 1ull << cell;
+		uint64_t c = cell_bit;
+		if (bit_line[cell][0] & ~ba) {
+			c |= (cell_bit >> 1) & 0x7f7f7f7f7f7f7f7full;
+			c |= (cell_bit << 1) & 0xfefefefefefefefeull;
+		}
+		if (bit_line[cell][1] & ~ba) {
+			c |= (cell_bit >> 8);
+			c |= (cell_bit << 8);
+		}
+		if (bit_line[cell][2] & ~ba) {
+			c |= (cell_bit >> 7) & 0x00fefefefefefefeull;
+			c |= (cell_bit << 7) & 0x7f7f7f7f7f7f7f00ull;
+		}
+		if (bit_line[cell][3] & ~ba) {
+			c |= (cell_bit >> 9) & 0x007f7f7f7f7f7f7full;
+			c |= (cell_bit << 9) & 0xfefefefefefefe00ull;
+		}
+		chunk.push_back (c & ba);
+	}
+
+	uint64_t bb = 0;
+	for (auto e = chunk.begin (); e != chunk.end ();) {
+		e = chunk.end ();
+		for (auto i = chunk.begin (); i != chunk.end (); i++) {
+			for (auto j = i + 1; j < chunk.end (); j++) {
+				if (*i & *j) {
+					*i |= *j;
+					if (pop_count_ull (*i) > n_discs_half)
+						return;
+					chunk.erase (j--);
+				}
+			}
+			bb |= *i;
+		}
+	}
+
+	for (uint64_t b = ba & ~bb; b; b &= b - 1)
+		chunk.push_back (b & -b);
+
+	for (int i = 1; i < (1 << chunk.size () - 1); i++) {
+		uint64_t bb = 0;
+		for (int j = 0; j < chunk.size (); j++) {
+			if (i & (1 << j)) {
+				bb |= chunk[j];
+				if (pop_count_ull (bb) > n_discs_half)
+					break;
+			}
+		}
+		if (pop_count_ull (bb) == n_discs_half) {
+			board->player = bb;
+			board->opponent = ba & ~bb;
+    	    ++(*n_boards);
             find_path(board, n_solutions, data);
-        }
-        return;
-    }
-    int n_player = pop_count_ull(board->player);
-    int n_opponent = pop_count_ull(board->opponent);
-    //if (n_player > n_discs_half || n_opponent > n_discs_half){
-    //    return;
-    //}
-    uint64_t group = groups[group_idx];
-    int n_group = pop_count_ull(group);
-    if (n_player + n_group <= n_discs_half){
-        board->player ^= group;
-            generate_boards(board, groups, group_idx + 1, n_discs_half, n_boards, n_solutions, data);
-        board->player ^= group;
-    }
-    if (n_opponent + n_group <= n_discs_half && group_idx > 0){
-        board->opponent ^= group;
-            generate_boards(board, groups, group_idx + 1, n_discs_half, n_boards, n_solutions, data);
-        board->opponent ^= group;
-    }
+		}
+	}
 }
 
 // check whether all discs are connected
@@ -417,48 +421,6 @@ bool check_all_connected(uint64_t discs){
     return visited == discs;
 }
 
-std::vector<uint64_t> div_groups(uint64_t discs, uint64_t done_discs){
-    std::vector<uint64_t> res;
-    while (discs != done_discs){
-        uint64_t group = 1ULL << ctz(~done_discs & discs);
-        uint64_t f_group = 0;
-        uint64_t checked = 0;
-        constexpr int shifts[4] = {1, 8, 7, 9};
-        while (group != f_group){
-            f_group = group;
-            uint64_t check_bits = group & ~checked;
-            for (uint_fast8_t cell = first_bit(&check_bits); check_bits; cell = next_bit(&check_bits)){
-                for (int i = 0; i < 4; ++i){
-                    if ((discs & bit_line[cell][i]) != bit_line[cell][i]){ // non full line
-                        int shift = shifts[i];
-                        uint64_t cell_bit = 1ULL << cell;
-                        for (int j = 1; j < 8; ++j){
-                            uint64_t next_cell = cell_bit << (shift * j);
-                            if (next_cell & discs & bit_line[cell][i]){
-                                group |= next_cell;
-                            } else{
-                                break;
-                            }
-                        }
-                        for (int j = 1; j < 8; ++j){
-                            uint64_t next_cell = cell_bit >> (shift * j);
-                            if (next_cell & discs & bit_line[cell][i]){
-                                group |= next_cell;
-                            } else{
-                                break;
-                            }
-                        }
-                        checked |= cell_bit;
-                    }
-                }
-            }
-        }
-        res.emplace_back(group);
-        done_discs ^= group;
-    }
-    return res;
-}
-
 // generate silhouettes
 void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64_t *n_silhouettes, uint64_t *n_boards, uint64_t *n_solutions, bool connected, int max_memo_depth, std::vector<std::pair<Board, std::unordered_set<std::string>>> &data){
     if (!connected){
@@ -468,10 +430,9 @@ void generate_silhouettes(uint64_t discs, int depth, uint64_t seen_cells, uint64
         if (connected){
             ++(*n_silhouettes);
             Board board;
-            board.player = 0;
+            board.player = discs;
             board.opponent = 0;
-            std::vector<uint64_t> groups = div_groups(discs, 0);
-            generate_boards(&board, groups, 0, pop_count_ull(discs) / 2, n_boards, n_solutions, data);
+            generate_boards(&board, pop_count_ull(discs) / 2, n_boards, n_solutions, data);
         }
         return;
     }
