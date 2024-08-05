@@ -1,11 +1,11 @@
 ﻿/*
-	Shortest Draw Othello
+    Shortest Draw Othello
 
-	@file Shortest_Draw_Othello.cpp
-		Main file
-	@date 2024
-	@author Takuto Yamana
-	@license GPL-3.0 license
+    @file Shortest_Draw_Othello.cpp
+        Main file
+    @date 2024
+    @author Takuto Yamana
+    @license GPL-3.0 license
 */
 
 #include <iostream>
@@ -150,14 +150,14 @@ inline void fULL_stability_d(uint64_t fULL, uint64_t *fULL_d7, uint64_t *fULL_d9
     constexpr uint64_t edge = 0xFF818181818181FFULL;
     uint64_t l7, r7, l9, r9;
     l7 = r7 = fULL;
-    l7 &= edge | (l7 >> 7);		r7 &= edge | (r7 << 7);
-    l7 &= 0xFFFF030303030303ULL | (l7 >> 14);	r7 &= 0xC0C0C0C0C0C0FFFFULL | (r7 << 14);
-    l7 &= 0xFFFFFFFF0F0F0F0FULL | (l7 >> 28);	r7 &= 0xF0F0F0F0FFFFFFFFULL | (r7 << 28);
+    l7 &= edge | (l7 >> 7);        r7 &= edge | (r7 << 7);
+    l7 &= 0xFFFF030303030303ULL | (l7 >> 14);    r7 &= 0xC0C0C0C0C0C0FFFFULL | (r7 << 14);
+    l7 &= 0xFFFFFFFF0F0F0F0FULL | (l7 >> 28);    r7 &= 0xF0F0F0F0FFFFFFFFULL | (r7 << 28);
     *fULL_d7 = l7 & r7;
 
     l9 = r9 = fULL;
-    l9 &= edge | (l9 >> 9);		r9 &= edge | (r9 << 9);
-    l9 &= 0xFFFFC0C0C0C0C0C0ULL | (l9 >> 18);	r9 &= 0x030303030303FFFFULL | (r9 << 18);
+    l9 &= edge | (l9 >> 9);        r9 &= edge | (r9 << 9);
+    l9 &= 0xFFFFC0C0C0C0C0C0ULL | (l9 >> 18);    r9 &= 0x030303030303FFFFULL | (r9 << 18);
     *fULL_d9 = l9 & r9 & (0x0F0F0F0FF0F0F0F0ULL | (l9 >> 36) | (r9 << 36));
 }
 
@@ -339,68 +339,61 @@ constexpr uint64_t bit_line[HW2][4] = {
 
 // generate draw endgame
 void generate_boards(uint64_t silhouette, int n_discs_half, uint64_t *n_boards, uint64_t *n_solutions, std::vector<std::pair<Board, std::unordered_set<std::string>>> &data){
-	std::vector<uint64_t> chunk;
+    std::vector<uint64_t> chunk;
     uint64_t silhouette_cpy = silhouette;
     for (uint_fast8_t cell = first_bit(&silhouette_cpy); silhouette_cpy; cell = next_bit(&silhouette_cpy)) {
-		uint64_t cell_bit = 1ULL << cell;
-		uint64_t group = cell_bit;
-		if (bit_line[cell][0] & ~silhouette) {
-			group |= (cell_bit >> 1) & 0x7F7F7F7F7F7F7F7FULL;
-			group |= (cell_bit << 1) & 0xFEFEFEFEFEFEFEFEULL;
-		}
-		if (bit_line[cell][1] & ~silhouette) {
-			group |= (cell_bit >> 8);
-			group |= (cell_bit << 8);
-		}
-		if (bit_line[cell][2] & ~silhouette) {
-			group |= (cell_bit >> 7) & 0x00FEFEFEFEFEFEFEULL;
-			group |= (cell_bit << 7) & 0x7F7F7F7F7F7F7F00ULL;
-		}
-		if (bit_line[cell][3] & ~silhouette) {
-			group |= (cell_bit >> 9) & 0x007F7F7F7F7F7F7FULL;
-			group |= (cell_bit << 9) & 0xFEFEFEFEFEFEFE00ULL;
-		}
-		chunk.emplace_back(group & silhouette);
-	}
+        uint64_t cell_bit = 1ULL << cell;
+        uint64_t group = cell_bit;
+        if (bit_line[cell][0] & ~silhouette) {
+            group |= (cell_bit << 1) & 0xFEFEFEFEFEFEFEFEULL;
+        }
+        if (bit_line[cell][1] & ~silhouette) {
+            group |= (cell_bit << 8);
+        }
+        if (bit_line[cell][2] & ~silhouette) {
+            group |= (cell_bit << 7) & 0x7F7F7F7F7F7F7F00ULL;
+        }
+        if (bit_line[cell][3] & ~silhouette) {
+            group |= (cell_bit << 9) & 0xFEFEFEFEFEFEFE00ULL;
+        }
+        chunk.emplace_back(group & silhouette);
+    }
 
-	uint64_t bb = 0;
-	for (auto e = chunk.begin(); e != chunk.end();) {
-		e = chunk.end();
-		for (auto i = chunk.begin(); i != chunk.end(); ++i) {
-			for (auto j = i + 1; j < chunk.end(); ++j) {
-				if (*i & *j) {
-					*i |= *j;
-					if (pop_count_ull(*i) > n_discs_half) {
-						return;
+    uint64_t bb = 0;
+    for (auto e = chunk.begin(); e != chunk.end();) {
+        e = chunk.end();
+        for (auto i = chunk.begin(); i != chunk.end(); ++i) {
+            for (auto j = i + 1; j < chunk.end(); ++j) {
+                if (*i & *j) {
+                    *i |= *j;
+                    if (pop_count_ull(*i) > n_discs_half) {
+                        return;
                     }
-					chunk.erase(j--);
-				}
-			}
-			bb |= *i;
-		}
-	}
-
-	for (uint64_t bits = silhouette & ~bb; bits; bits &= bits - 1)
-		chunk.emplace_back(bits & -(int64_t)bits);
+                    chunk.erase(j--);
+                }
+            }
+            bb |= *i;
+        }
+    }
 
     Board board;
-	for (int i = 1; i < (1 << chunk.size() - 1); ++i) {
-		uint64_t player = 0;
-		for (int j = 0; j < chunk.size(); ++j) {
-			if (i & (1 << j)) {
-				player |= chunk[j];
-				if (pop_count_ull(player) > n_discs_half) {
-					break;
+    for (int i = 1; i < (1 << chunk.size() - 1); ++i) {
+        uint64_t player = 0;
+        for (int j = 0; j < chunk.size(); ++j) {
+            if (i & (1 << j)) {
+                player |= chunk[j];
+                if (pop_count_ull(player) > n_discs_half) {
+                    break;
                 }
-			}
-		}
-		if (pop_count_ull(player) == n_discs_half) {
-			board.player = player;
-			board.opponent = silhouette & ~player;
-    	    ++(*n_boards);
+            }
+        }
+        if (pop_count_ull(player) == n_discs_half) {
+            board.player = player;
+            board.opponent = silhouette & ~player;
+            ++(*n_boards);
             find_path(&board, n_solutions, data);
-		}
-	}
+        }
+    }
 }
 
 // check whether all discs are connected
