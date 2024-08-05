@@ -132,7 +132,7 @@ task 8/12
 task 9/12
 task 10/12
 task 11/12
-depth 2 unique transcript: 0 unique board: 0 n_silhouettes 0 n_boards 0 n_solutions 0 time 1 ms
+depth 2 unique transcript: 0 unique board: 0 n_silhouettes 0 n_boards 0 n_solutions 0 time 2 ms
 depth 4 start
 task 0/12
 task 1/12
@@ -146,7 +146,7 @@ task 8/12
 task 9/12
 task 10/12
 task 11/12
-depth 4 unique transcript: 0 unique board: 0 n_silhouettes 1 n_boards 0 n_solutions 0 time 2 ms
+depth 4 unique transcript: 0 unique board: 0 n_silhouettes 1 n_boards 0 n_solutions 0 time 3 ms
 depth 6 start
 task 0/12
 task 1/12
@@ -160,7 +160,7 @@ task 8/12
 task 9/12
 task 10/12
 task 11/12
-depth 6 unique transcript: 0 unique board: 0 n_silhouettes 193 n_boards 6 n_solutions 0 time 3 ms
+depth 6 unique transcript: 0 unique board: 0 n_silhouettes 193 n_boards 6 n_solutions 0 time 4 ms
 depth 8 start
 task 0/12
 task 1/12
@@ -188,7 +188,7 @@ task 8/12
 task 9/12
 task 10/12
 task 11/12
-depth 10 unique transcript: 0 unique board: 0 n_silhouettes 181930 n_boards 500 n_solutions 0 time 84 ms
+depth 10 unique transcript: 0 unique board: 0 n_silhouettes 181930 n_boards 500 n_solutions 0 time 55 ms
 depth 12 start
 task 0/12
 task 1/12
@@ -202,7 +202,7 @@ task 8/12
 task 9/12
 task 10/12
 task 11/12
-depth 12 unique transcript: 0 unique board: 0 n_silhouettes 3074854 n_boards 5533 n_solutions 0 time 1232 ms
+depth 12 unique transcript: 0 unique board: 0 n_silhouettes 3074854 n_boards 5533 n_solutions 0 time 849 ms
 depth 14 start
 task 0/12
 task 1/12
@@ -216,7 +216,7 @@ task 8/12
 task 9/12
 task 10/12
 task 11/12
-depth 14 unique transcript: 0 unique board: 0 n_silhouettes 40441855 n_boards 60574 n_solutions 0 time 16560 ms
+depth 14 unique transcript: 0 unique board: 0 n_silhouettes 40441855 n_boards 60574 n_solutions 0 time 11446 ms
 depth 16 start
 task 0/12
 task 1/12
@@ -230,7 +230,7 @@ task 8/12
 task 9/12
 task 10/12
 task 11/12
-depth 16 unique transcript: 0 unique board: 0 n_silhouettes 431093638 n_boards 540373 n_solutions 0 time 183371 ms
+depth 16 unique transcript: 0 unique board: 0 n_silhouettes 431093638 n_boards 540373 n_solutions 0 time 137117 ms
 depth 18 start
 task 0/12
 task 1/12
@@ -244,7 +244,7 @@ task 8/12
 task 9/12
 task 10/12
 task 11/12
-depth 18 unique transcript: 0 unique board: 0 n_silhouettes 3806080413 n_boards 3491591 n_solutions 0 time 1716421 ms
+depth 18 unique transcript: 0 unique board: 0 n_silhouettes 3806080413 n_boards 3491591 n_solutions 0 time 1289060 ms
 depth 20 start
 task 0/12
 SOLUTION f5f4c3f6g7f7f3h7f8b2h6e7h8g3d7e3f2f1a1c5
@@ -811,4 +811,4 @@ SOLUTION f5f6e6d6g7f3c6b7b6g6g2h1b8a6h6c8b5a8d3b4
 SOLUTION f5f6e6d6g7f3c6b7b6g6g2h1b8a8h6a6b5c8d3b4
 task 10/12
 task 11/12
-depth 20 unique transcript: 185 unique board: 10 n_silhouettes 28136178376 n_boards 19555547 n_solutions 553 time 14053054 ms
+depth 20 unique transcript: 185 unique board: 10 n_silhouettes 28136178376 n_boards 19555547 n_solutions 553 time 10556342 ms
